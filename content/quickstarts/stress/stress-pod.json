@@ -1,0 +1,326 @@
+{
+    "apiVersion": "v1",
+    "kind": "Template",
+    "metadata": {
+        "name": "centos-stress-template"
+    },
+    "objects": [
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "generateName": "centos-stress-",
+                "labels": {
+                    "run": "centos-stress",
+                    "test": "centos-stress"
+                }
+            },
+            "spec": {
+                "nodeSelector": {
+                    "placement": "${PLACEMENT}"
+                },
+                "tolerations": [
+                    {   
+                        "operator": "Equal",
+                        "key": "placement",
+                        "value": "${PLACEMENT}",
+                        "effect": "NoSchedule"
+                    }
+                ],
+                "containers": [
+                    {
+                        "env": [
+                            {
+                                "name": "RUN",
+                                "value": "${RUN}"
+                            },
+                            {
+                                "name": "RUN_TIME",
+                                "value": "${RUN_TIME}"
+                            },
+                            {
+                                "name": "STRESS_CPU",
+                                "value": "${STRESS_CPU}"
+                            },
+                            {
+                                "name": "ROUTER_IP",
+                                "value": "${ROUTER_IP}"
+                            },
+                            {
+                                "name": "TARGET_HOST",
+                                "value": "${TARGET_HOST}"
+                            },
+                            {
+                                "name": "TARGET_PORT",
+                                "value": "${TARGET_PORT}"
+                            },
+                            {
+                                "name": "JVM_ARGS",
+                                "value": "${JVM_ARGS}"
+                            },
+                            {
+                                "name": "JMETER_SIZE",
+                                "value": "${JMETER_SIZE}"
+                            },
+                            {
+                                "name": "JMETER_RAMP",
+                                "value": "${JMETER_RAMP}"
+                            },
+                            {
+                                "name": "JMETER_TPS",
+                                "value": "${JMETER_TPS}"
+                            },
+                            {
+                                "name": "MB_DELAY",
+                                "value": "${MB_DELAY}"
+                            },
+                            {
+                                "name": "MB_TARGETS",
+                                "value": "${MB_TARGETS}"
+                            },
+                            {
+                                "name": "MB_CONNS_PER_TARGET",
+                                "value": "${MB_CONNS_PER_TARGET}"
+                            },
+                            {
+                                "name": "MB_KA_REQUESTS",
+                                "value": "${MB_KA_REQUESTS}"
+                            },
+                            {
+                                "name": "MB_TLS_SESSION_REUSE",
+                                "value": "${MB_TLS_SESSION_REUSE}"
+                            },
+                            {
+                                "name": "MB_RAMP_UP",
+                                "value": "${MB_RAMP_UP}"
+                            },
+                            {
+                                "name": "URL_PATH",
+                                "value": "${URL_PATH}"
+                            },
+                            {
+                                "name": "GUN",
+                                "value": "${GUN}"
+                            },
+                            {
+                                "name": "GUN_PORT",
+                                "value": "${GUN_PORT}"
+                            },
+                            {   
+                                "name": "RESULTS_DIR",
+                                "value": "${RESULTS_DIR}"
+                            },
+                            {
+                                "name": "SERVER_RESULTS",
+                                "value": "${SERVER_RESULTS}"
+                            },
+                            {
+                                "name": "SERVER_RESULTS_DIR",
+                                "value": "${SERVER_RESULTS_DIR}"
+                            },
+                            {
+                                "name": "IDENTIFIER",
+                                "value": "${IDENTIFIER}"
+                            }
+                        ],
+                        "image": "${WLG_IMAGE}",
+                        "imagePullPolicy": "Always",
+                        "name": "centos-stress",
+                        "resources": {},
+                        "volumeMounts": [
+                            {
+                                "name": "targets",
+                                "mountPath": "/opt/wlg/"
+                            },
+                            {
+                                "name": "ssh-key",
+                                "mountPath": "/opt/stress/.ssh/"
+                            }
+                        ],
+                        "terminationMessagePath": "/dev/termination-log"
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "targets",
+                        "configMap": {
+                            "name": "wlg-targets",
+                            "optional": true,
+                            "items": [
+                            	{
+					"key": "wlg-targets",
+					"path": "targets.txt"
+				}
+                            ]
+                        }
+                    },
+                    {
+                        "name": "ssh-key",
+                        "secret": {
+                            "secretName": "wlg-ssh-key",
+                            "optional": true,
+                            "items": [
+                            	{
+					"key": "wlg-ssh-key",
+					"path": "id_rsa"
+				}
+                            ]
+                        }
+                    }
+                ],
+                "restartPolicy": "Never"
+            }
+        }
+    ],
+    "parameters": [
+        {
+            "name": "WLG_IMAGE",
+            "displayName": "WLG image",
+            "description": "Workload generator image",
+            "value": "svt/centos-stress:latest"
+        },
+        {
+            "name": "RUN",
+            "displayName": "Run App Name",
+            "description": "Tells the container which app to execute",
+            "value": "jmeter"
+        },
+        {
+            "name": "RUN_TIME",
+            "displayName": "Run timeout",
+            "description": "The duration that tools will run before ending",
+            "value": "60"
+        },
+        {
+            "name": "STRESS_CPU",
+            "displayName": "STRESS CPU Threads",
+            "description": "How many stress CPU worker threads to spawn",
+            "value": "6"
+        },
+        {
+            "name": "ROUTER_IP",
+            "displayName": "Router IP",
+            "description": "The IP of the OpenShift router to direct requests through",
+            "value": "127.0.0.1"
+        },
+        {
+            "name": "TARGET_HOST",
+            "displayName": "JMeter IP",
+            "description": "The target IP for HTTP requests in JMeter",
+            "value": "127.0.0.1"
+        },
+        {
+            "name": "TARGET_PORT",
+            "displayName": "JMeter Port",
+            "description": "The target port for HTTP requests in JMeter",
+            "value": "80"
+        },
+        {
+            "name": "JVM_ARGS",
+            "displayName": "Optional JVM arguments",
+            "description": "Optional JVM arguments",
+            "value": ""
+        },
+        {
+            "name": "JMETER_SIZE",
+            "displayName": "JMeter instance size",
+            "description": "Number of hosts to stress per JMeter instance",
+            "value": "3"
+        },
+        {
+            "name": "JMETER_RAMP",
+            "displayName": "JMeter Ramp-up Time",
+            "description": "The ramp-up period of the thread group in JMeter",
+            "value": "30"
+        },
+        {
+            "name": "JMETER_TPS",
+            "displayName": "JMeter throughput",
+            "description": "Thread throuput rate for JMeter",
+            "value": "60"
+        },
+        {
+            "name": "MB_DELAY",
+            "displayName": "Delay between requests for mb",
+            "description": "Delay between requests for the mb client in ms.",
+            "value": "1000"
+        },
+        {
+            "name": "MB_TARGETS",
+            "displayName": "Regex to select target routes",
+            "description": "Regex to select target routes for mb.",
+            "value": "."
+        },
+        {
+            "name": "MB_CONNS_PER_TARGET",
+            "displayName": "Connections per target route for mb",
+            "description": "Connections per target route for mb.",
+            "value": "1"
+        },
+        {
+            "name": "MB_KA_REQUESTS",
+            "displayName": "How many HTTP keep-alive requests to send per connection",
+            "description": "How many HTTP keep-alive requests to send per connection before sending Connection: close header.",
+            "value": "10"
+        },
+        {
+            "name": "MB_TLS_SESSION_REUSE",
+            "displayName": "Enable TLS session reuse for mb",
+            "description": "Enable TLS session reuse for mb.",
+            "value": "n"
+        },
+        {
+            "name": "MB_RAMP_UP",
+            "displayName": "Thread ramp-up time in seconds",
+            "description": "Thread ramp-up time in seconds.",
+            "value": "0"
+        },
+        {
+            "name": "URL_PATH",
+            "displayName": "URL path to query",
+            "description": "URL path to query with http(s) requests.",
+            "value": "/"
+        },
+        {
+            "name": "GUN",
+            "displayName": "GUN IP Addr",
+            "description": "The IP of the machine running cluster loader",
+            "value": "127.0.0.1"
+        },
+        {
+            "name": "GUN_PORT",
+            "displayName": "GUN Port Number",
+            "description": "The port number of the machine running cluster loader",
+            "value": "9090"
+        },
+        {
+            "name": "RESULTS_DIR",
+            "displayName": "Test result directory",
+            "description": "Local/Container test results directory, if empty, default will be used",
+            "value": ""
+        },
+        {
+            "name": "SERVER_RESULTS",
+            "displayName": "ssh server to copy results to",
+            "description": "ssh server to copy results to: [user@]server",
+            "value": ""
+        },
+        {
+            "name": "SERVER_RESULTS_DIR",
+            "displayName": "Target directory on the ssh results server",
+            "description": "Target directory on the ssh results server: <SERVER_RESULTS>:<SERVER_RESULTS_DIR>",
+            "value": ""
+        },
+        {
+            "name": "PLACEMENT",
+            "displayName": "Placement of the WLG pod",
+            "description": "Placement of the WLG pod based on a node selector.",
+            "value": "test"
+        },
+        {
+            "name": "IDENTIFIER",
+            "description": "Number to append to the name of resources",
+            "value": "1"
+        }
+    ]
+}

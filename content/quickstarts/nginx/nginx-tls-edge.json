@@ -1,0 +1,139 @@
+{
+    "apiVersion": "v1",
+    "kind": "Template",
+    "metadata": {
+        "name": "nginx"
+    },
+    "objects": [
+        {
+            "kind": "ReplicationController",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "nginx-${IDENTIFIER}"
+            },
+            "spec": {
+                "replicas": "${REPLICAS}",
+                "template": {
+                    "spec": {
+                        "restartPolicy": "Always",
+                        "containers": [
+                            {
+                                "image": "docker.io/jmencak/nginx",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "nginx",
+                                "ports": [
+                                    {
+                                        "name": "http",
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    },
+                                    {
+                                        "name": "https",
+                                        "containerPort": 8443,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "resources": {
+                                   "limits": {
+                                        "cpu": "800m",
+                                        "memory": "20Mi"
+                                    },
+                                    "requests": {
+                                        "cpu": "10m",
+                                        "memory": "10Mi"
+                                    }
+                                },
+                                "securityContext": {
+                                    "capabilities": {
+                                        "drop": [
+                                            "KILL",
+                                            "MKNOD",
+                                            "SETGID",
+                                            "SETUID",
+                                            "SYS_CHROOT"
+                                        ]
+                                    },
+                                    "privileged": false
+                                },
+                                "terminationMessagePath": "/dev/termination-log"
+                            }
+                        ]
+                    },
+                    "metadata": {
+                        "labels": {
+                            "name": "nginx-${IDENTIFIER}"
+                        }
+                    }
+                },
+                "selector": {
+                    "name": "nginx-${IDENTIFIER}"
+                }
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "secure-nginx-route-example-${IDENTIFIER}"
+            },
+            "spec": {
+                "host": "${APPLICATION_DOMAIN}",
+                "to": {
+                    "kind": "Service",
+                    "name": "nginx-${IDENTIFIER}"
+                },
+                "tls": {
+                    "termination": "edge",
+                    "certificate": "-----BEGIN CERTIFICATE-----\nMIIDZTCCAk2gAwIBAgIBATANBgkqhkiG9w0BAQsFADBNMQswCQYDVQQGEwJVUzET\nMBEGA1UECAwKQ2FsaWZvcm5pYTELMAkGA1UEBwwCTlkxHDAaBgNVBAoME0RlZmF1\nbHQgQ29tcGFueSBMdGQwHhcNMTcwMTI0MDgzNDQwWhcNMjcwMTIyMDgzNDQwWjCB\njzErMCkGA1UEAwwiKi5yb3V0ZXIuZGVmYXVsdC5zdmMuY2x1c3Rlci5sb2NhbDET\nMBEGA1UECAwKQ2FsaWZvcm5pYTELMAkGA1UEBhMCVVMxIDAeBgkqhkiG9w0BCQEW\nEWFkbWluQGV4YW1wbGUuY29tMRwwGgYDVQQKDBNEZWZhdWx0IENvbXBhbnkgTHRk\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyzR6sztDA59cN7lypc5j\nUgrpyQ+Kt2fiHMjNahNhs28n4k3owd9IP64x8NXYZw/C2+c2Jz27y9e+EvSRduNV\nopVOzepfP8wOJRrcXMQCEt8wQ4iCB+wPtj7KaaC3e6gq4UYSb/LxTHc0MUFfFT5i\n3cxQhltrR6SfCA+KcuclGtkRPySSgmlheHHFxbHdYMvop5G8V9f6wNl04IjKFxtl\n7NTL1Ia8NpAnIit0mxfxWNkYa9E+SrONjEAQt0Z8OBRAt94tq3ilFAmDEcm/aTEH\ns+b5zscNbf7Mh1NtzCHpeFd/tKBxNyMJlEMoCc4rFDv8pBveXXOlKp/MHt7q3ANs\naQIDAQABow0wCzAJBgNVHRMEAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCIq+8T7wc8\njL6G9/VM21mlxbHmkPB18eCxMV0VZvKdH+Hg2g8U5flg+cE8kG/BBMPAdA+I2Lla\ngi1uqESEqKMyiJvqxej2IIxQKojUEPF/u0ZjAxc8pzs8yUtgDbt6Ur6sDJ2NShbg\nBnQVkOrFTJJ0trHMPc4zilIeLGZXiZNJrC/JBPOe0DbInSixIreoPSNciW6G5MZ3\ni4a8cpmg7WTzNSkikvkzaZA0xWupYwjbQdxg5qmflzA8e+45uVc8H+6qQ5em83+x\nRr7RN9p3GnxBK7sc7taCQxLwyWW0hsRqfvWvWzEsDj57WElvIe8ed8vk8AjBxg1S\ngnYUE1S6lSSH\n-----END CERTIFICATE-----",
+                    "key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLNHqzO0MDn1w3\nuXKlzmNSCunJD4q3Z+IcyM1qE2GzbyfiTejB30g/rjHw1dhnD8Lb5zYnPbvL174S\n9JF241WilU7N6l8/zA4lGtxcxAIS3zBDiIIH7A+2PsppoLd7qCrhRhJv8vFMdzQx\nQV8VPmLdzFCGW2tHpJ8ID4py5yUa2RE/JJKCaWF4ccXFsd1gy+inkbxX1/rA2XTg\niMoXG2Xs1MvUhrw2kCciK3SbF/FY2Rhr0T5Ks42MQBC3Rnw4FEC33i2reKUUCYMR\nyb9pMQez5vnOxw1t/syHU23MIel4V3+0oHE3IwmUQygJzisUO/ykG95dc6Uqn8we\n3urcA2xpAgMBAAECggEAJESUlcLA/jeGLQfzV3aTsYPzIAifGIb5C2wnhYQ6Dt2K\n/9Ap99hTO9JqZXK1cgeVHsyQlMZm60XxTc7K265NjXwamZP4NhnEeIjnxcLSH+4n\n3hXSJ3nRgBSK6fleZjqolJZ+Ge8BdEVeUmA5iUAeQzoBMUnFxv6xx62GZ2Wr8LN1\n4h+icGwJkL/zqS2oHpvMPhmevY7fcfO54G8DK1XBk+Pr/rYBzKEAIdgBIW2a52wZ\nLXNccCfV96mVhet43GzCIqnpj7cPnpQUs5RAgs/f6RsZAz5nwMnuQnCDz2pe2bJ3\nz2MyuiZvNz2iTftUURKzOdrH/ZjJpt8tI0pwUrMzkQKBgQDwZnIOif3s4D8B1tvC\ntteqALl0XyvpvLvmeztNa1K6C6hsbHIePDMBt/2StKtVMw+YRV0Cgpv2i0YiVxE6\nbHmYuUNa9UWuxiz1vTtdeT8JzR7N0LlhgPQpXdbeF/xd0nW8i9VFhBBgAVmtG/hn\n9dqb5tT9LFusm/GVV6o5EYccfQKBgQDYZCSupZIsBn4AEpzo3haWSQtunjnX9pYQ\nZRB6RyHK/L0bZJ9c5aoDzST/Tith7izDG/V49qM4NHCi8h8tyzfwNX5jaGy2Ot7/\nRqjc01T3VgzIHot+du4TO19Q9UwUskMqZgfFOMrj7c7Ec86Tug4HlfKZqQL6Ey6N\nkU9cK4nPXQKBgQCQ++gL1rNa+f9l95QAQc+diuROR9uvExFrtqSUU4bIB6HjCiBl\nFb9ZaQK4SNgQAUSFfEfU7LptHaAFs+cDCkrnjcwOfmAxQPn6ls7H2Ajpu1i5ngk/\nwcr/a8XbmjGsz/IL7XWJgFVz4TyZR4YwBLl8TuHjcq4zUrWHcSCLXIPU7QKBgEv+\nn4NWUodzoDyWTNTbakNNU959YwMdboZDeA35fTy0lhVQuUb+wT6khSHEaifyZXYA\nE61vsNLEV+ph7eE/RV3u63wt6D/3XOl5/0POVECoz8RYNdUsH2BRsZ/VBesez8fM\nHV5+G4MAuWT05s+qv9KaLqEYYhtBMVA2gBB2medhAoGAXd6lnBByuWrfHGWB5Gu+\ngKWz8b/b7CD64F10lQnv049qkFL7W4W3FuevaeEu59fUS5YlmoqLK9HA0PYtYu7O\nruEWqJwxkE3obUYLCv9gOnbmBTbW06n6sajBljbkQIqdI6SNKzO73N2scQi80jGi\n170/K2a6P2a38cg91lZDv9Q=\n-----END PRIVATE KEY-----"
+                }
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "nginx-${IDENTIFIER}",
+                "labels": {
+                    "name": "nginx"
+                },
+                "annotations": {
+                    "description": "Exposes and load balances the application pods"
+                }
+            },
+            "spec": {
+                "selector": {
+                    "name": "nginx-${IDENTIFIER}"
+                },
+                "type": "NodePort",
+                "ports": [
+                    {
+                        "name": "http",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    }
+                ]
+            }
+        }
+    ],
+    "parameters": [
+        {
+            "name": "APPLICATION_DOMAIN",
+            "displayName": "Application Hostname",
+            "description": "The exposed hostname that will route to the nginx-* service, if left blank a value will be defaulted.",
+            "value": ""
+        },
+        {
+            "name": "REPLICAS",
+            "displayName": "Number of replicas",
+            "description": "Start with the number of replicas.",
+            "value": "1"
+        },
+        {
+            "name": "IDENTIFIER",
+            "description": "Number to append to the name of resources",
+            "value": "1"
+        }
+    ]
+}
