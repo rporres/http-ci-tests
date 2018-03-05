@@ -83,6 +83,7 @@ param_set() {
     param_hlp[$i]="$hlp"
     ((i++))
   done << _PARAM_
+wlg_project-delete|wlg_project_delete|Delete the workload generator project.
 router_liveness_probe-disable|router_liveness_probe|Increase failure threshold for the router liveness probe.
 load_generator-label|load_generator_nodes_label|Label and taint the node(s) for the load generator pod(s).
 load_generator-portrange|load_generator_nodes_local_port_range|Increase local port range on the load generator node(s).
@@ -114,6 +115,12 @@ param2fn() {
   done
 
   return 1
+}
+
+# Delete the workload generator project.
+wlg_project_delete() {
+  # TODO: golang cluster loader
+  oc delete project centos-stress0 >/dev/null 2>&1
 }
 
 # Increase failure threshold for the router liveness probe.
