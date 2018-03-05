@@ -9,6 +9,7 @@ param_name=()			# parameters, name
 param_fn=()			# parameters, function name
 param_hlp=()			# parameters, help
 http_ns_label=test=http		# label for namespaces holding application pods
+declare -a a_region		# array of old node region labels
 
 # pbench-specific variables ####################################################
 pbench_use=${SETUP_PBENCH:-true}
@@ -126,19 +127,32 @@ router_liveness_probe() {
 
 load_generator_nodes_label_taint() {
   local label="${1:-y}"	# unlabel/remove taint if not 'y'
-  local node placement taint
+  local i node placement taint region
 
   if test "$label" = y ; then
     placement=placement=test
+    region=region=primary
     taint=placement=test:NoSchedule
   else
     placement=placement-
+    region=region=$region_old
     taint=placement-
   fi
 
+  i=0
   for node in ${LOAD_GENERATOR_NODES//,/ } ; do
+    if test "$label" = y ; then
+      # save old region
+      a_region[$i]=$(oc get node "$node" --template '{{printf "%s\n" .metadata.labels.region}}')
+      region=region=primary
+    else
+      # get old region from "stored regions" array
+      region=region="${a_region[$i]}"
+    fi
     oc label node $node $placement
+    oc label node $node $region --overwrite
     oc adm taint nodes $node $taint
+    ((i++))
   done
 }
 
@@ -312,8 +326,7 @@ benchmark_run() {
     die 1 "'$EXTENDED_TEST_BIN' not executable, install atomic-openshift-tests."
   fi
 
-  for MB_TARGETS in '(nginx|edge|passthrough|reencrypt)-0.[0-9]\.'
-#  for MB_TARGETS in '(nginx|edge|passthrough|reencrypt)-0.[0-9]\.' '(nginx|edge|passthrough|reencrypt)-0.[0-5]\.' '(nginx|edge|passthrough|reencrypt)-0.[0-0]\.'
+  for MB_TARGETS in '(nginx|edge|passthrough|reencrypt)-0.[0-9]\.' '(nginx|edge|passthrough|reencrypt)-0.[0-5]\.' '(nginx|edge|passthrough|reencrypt)-0.[0-0]\.'
   do
     oc get routes --all-namespaces | awk "/${MB_TARGETS}/"'{print $3}' > $routes_file
     routes=$(wc -l < $routes_file)
@@ -329,8 +342,7 @@ benchmark_run() {
 
       # make sure you set 'net.ipv4.ip_local_port_range = 1000 65535' on the client machine
       if   test $routes -le 100 ; then
-#        mb_conns_per_target="1 10 20 40 200"
-        mb_conns_per_target="1"
+        mb_conns_per_target="1 10 20 40 200"
       elif test $routes -le 500 ; then
         mb_conns_per_target="1 10 20 40 80"
       elif test $routes -le 1000 ; then
