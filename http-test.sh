@@ -395,7 +395,8 @@ process_results() {
   local dir routes_f conns_per_thread_f delay_f ka_f tlsru_f run_time_f
   local total_hits total_rps total_latency_95 target_dir
   local now=$(date '+%Y-%m-%d_%H.%M.%S')
-  local out_dir=${pbench_dir}/http-$now-${TEST_CFG}
+  local archive_name=http-$now-${TEST_CFG}
+  local out_dir=$pbench_dir/$archive_name
 
   if ! test "$pbench_use" = true ; then
     warn "processing of results is supported only for pbench runs"
@@ -425,6 +426,7 @@ process_results() {
       printf "%s\n" "$total_latency_95" >> $target_dir/$file_total_latency
     fi
   done
+  tar Jcvf $out_dir/${archive_name}.tar.xz -C $pbench_dir $archive_name
 }
 
 # Move the benchmark results to a pbench server.
