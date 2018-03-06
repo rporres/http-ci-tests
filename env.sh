@@ -14,9 +14,9 @@ export CLEAR_RESULTS=${CLEAR_RESULTS:-true}
 # https://github.com/chaitanyaenr/openshift-labeler
 export TOOLING_INVENTORY=${TOOLING_INVENTORY:-/root/inventory}
 # Move the benchmark results to a pbench server
-export MOVE_RESULTS=${MOVE_RESULTS:-true}
+export MOVE_RESULTS=${MOVE_RESULTS:-false}
 # Move the benchmark results to a pbench server
-export CONTAINERIZED=${CONTAINERIZED:-true}
+export CONTAINERIZED=${CONTAINERIZED:-false}
 # HTTP-test specifics
 # A synchronization endpoint listening at :9090 by default.
 export GUN=${GUN:-172.16.113.1}
