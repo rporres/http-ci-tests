@@ -323,8 +323,8 @@ pbench_user_benchmark() {
 # Run the HTTP(s) benchmark against routes in '$routes_file'.
 benchmark_run() {
   local routes routes_f delay_f mb_conns_per_target conns_per_thread_f ka_f now benchmark_test_config
-  local run_log=run.log		# a log file for non-pbench runs
-  local sleep_sec=60		# sleep for some time between test iterations
+  local run_log=run.log			# a log file for non-pbench runs
+  local benchmark_iteration_sleep=0	# sleep for some time between test iterations
 
   rm -f $run_log
 
@@ -381,8 +381,8 @@ benchmark_run() {
               $EXTENDED_TEST_BIN --ginkgo.focus="Load cluster" --viper-config=config/stress-mb 2>&1 | tee -a $run_log
             fi
 
-            echo "sleeping $sleep_sec"
-            sleep $sleep_sec
+            echo "sleeping $benchmark_iteration_sleep"
+            sleep $benchmark_iteration_sleep
           done
         done
       done
