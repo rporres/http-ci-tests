@@ -312,8 +312,8 @@ pbench_user_benchmark() {
   local benchmark_test_config="$1"
 
   if test "$pbench_containerized" = y ; then
-    # a containerized pbench run
-    pbench_user_benchmark_containerized "$benchmark_test_config"
+    # a containerized pbench run pbench_user_benchmark_containerized "$benchmark_test_config"
+    die 1 "Containerized Pbench not yet supported."
   else
     # a regular pbench run
     pbench-user-benchmark -C "$benchmark_test_config" -- $pbench_mb_wrapper
@@ -323,6 +323,7 @@ pbench_user_benchmark() {
 # Run the HTTP(s) benchmark against routes in '$routes_file'.
 benchmark_run() {
   local routes routes_f delay_f mb_conns_per_target conns_per_thread_f ka_f now benchmark_test_config
+  local router_term mb_targets
   local run_log=run.log			# a log file for non-pbench runs
   local benchmark_iteration_sleep=0	# sleep for some time between test iterations
 
@@ -333,66 +334,80 @@ benchmark_run() {
     die 1 "'$EXTENDED_TEST_BIN' not executable, install atomic-openshift-tests."
   fi
 
-  for MB_TARGETS in '(nginx|edge|passthrough|reencrypt)-0.[0-9]\.' '(nginx|edge|passthrough|reencrypt)-0.[0-5]\.' '(nginx|edge|passthrough|reencrypt)-0.[0-0]\.'
-  do
-    oc get routes --all-namespaces | awk "/${MB_TARGETS}/"'{print $3}' > $routes_file
-    routes=$(wc -l < $routes_file)
+  for route_term in "mix" "http" "edge" "passthrough" "reencrypt" ; do
+    case $route_term in
+      mix) mb_targets="(nginx|edge|passthrough|reencrypt)-0.[0-0]\. (nginx|edge|passthrough|reencrypt)-0.[0-9]\."
+      ;;
+      http) mb_targets="nginx-0.[0-9]\."
+      ;;
+      edge) mb_targets="edge-0.[0-9]\."
+      ;;
+      passthrough) mb_targets="passthrough-0.[0-9]\."
+      ;;
+      reencrypt) mb_targets="reencrypt-0.[0-9]\."
+      ;;
+    esac
 
-    test "${routes:-0}" -eq 0 && {
-      warn "no routes to test against"
-      continue
-    }
-    routes_f=$(printf "%04d" $routes)
+    for MB_TARGETS in $mb_targets ; do
+      oc get routes --all-namespaces | awk "/${MB_TARGETS}/"'{print $3}' > $routes_file
+      routes=$(wc -l < $routes_file)
 
-    for MB_DELAY in 0 ; do
-      delay_f=$(printf "%04d" $MB_DELAY)
+      test "${routes:-0}" -eq 0 && {
+        warn "no routes to test against"
+        continue
+      }
+      routes_f=$(printf "%04d" $routes)
 
-      # make sure you set 'net.ipv4.ip_local_port_range = 1000 65535' on the client machine
-      if   test $routes -le 100 ; then
-        mb_conns_per_target="1 10 20 40 200"
-      elif test $routes -le 500 ; then
-        mb_conns_per_target="1 10 20 40 80"
-      elif test $routes -le 1000 ; then
-        mb_conns_per_target="1 10 20 40"
-      elif test $routes -le 2000 ; then
-        mb_conns_per_target="1 10 20"
-      else
-        mb_conns_per_target="1"
-      fi
+      for MB_DELAY in 0 ; do
+        delay_f=$(printf "%04d" $MB_DELAY)
 
-      for MB_CONNS_PER_TARGET in $mb_conns_per_target ; do
-        conns_per_thread_f=$(printf "%03d" $MB_CONNS_PER_TARGET)
-        for MB_KA_REQUESTS in 1 10 100 ; do
-          ka_f=$(printf "%03d" $MB_KA_REQUESTS)
+        # make sure you set 'net.ipv4.ip_local_port_range = 1000 65535' on the client machine
+        if   test $routes -le 100 ; then
+          mb_conns_per_target="1 40 200"
+        elif test $routes -le 500 ; then
+          mb_conns_per_target="1 20 80"
+        elif test $routes -le 1000 ; then
+          mb_conns_per_target="1 20 40"
+        elif test $routes -le 2000 ; then
+          mb_conns_per_target="1 10 20"
+        else
+          mb_conns_per_target="1"
+        fi
 
-          for URL_PATH in /1024.html ; do
-            now=$(date '+%Y-%m-%d_%H.%M.%S')
-            benchmark_test_config="${routes_f}r-${conns_per_thread_f}cpt-${delay_f}d_ms-${ka_f}ka-${MB_TLS_SESSION_REUSE}tlsru-${RUN_TIME}s-${TEST_CFG}"
-            RESULTS_DIR=mb-$benchmark_test_config
-            echo "Running test with config: $benchmark_test_config"
+        for MB_CONNS_PER_TARGET in $mb_conns_per_target ; do
+          conns_per_thread_f=$(printf "%03d" $MB_CONNS_PER_TARGET)
+          for MB_KA_REQUESTS in 1 10 100 ; do
+            ka_f=$(printf "%03d" $MB_KA_REQUESTS)
 
-            export WLG_IMAGE RUN_TIME RESULTS_DIR SERVER_RESULTS_DIR MB_DELAY MB_TARGETS MB_CONNS_PER_TARGET MB_KA_REQUESTS MB_TLS_SESSION_REUSE URL_PATH
+            for URL_PATH in /1024.html ; do
+              now=$(date '+%Y-%m-%d_%H.%M.%S')
+              benchmark_test_config="${routes_f}r-${conns_per_thread_f}cpt-${delay_f}d_ms-${ka_f}ka-${MB_TLS_SESSION_REUSE}tlsru-${RUN_TIME}s-${route_term}-${TEST_CFG}"
+              RESULTS_DIR=mb-$benchmark_test_config
+              echo "Running test with config: $benchmark_test_config"
 
-            if test "$pbench_use" = true ; then
-              pbench_user_benchmark "$benchmark_test_config"
-            else
-              RESULTS_DIR=$RESULTS_DIR-$now	# add timestamp to non-pbench test directories
-              SERVER_RESULTS_DIR=$pbench_dir
-              $EXTENDED_TEST_BIN --ginkgo.focus="Load cluster" --viper-config=config/stress-mb 2>&1 | tee -a $run_log
-            fi
+              export WLG_IMAGE RUN_TIME RESULTS_DIR SERVER_RESULTS_DIR MB_DELAY MB_TARGETS MB_CONNS_PER_TARGET MB_KA_REQUESTS MB_TLS_SESSION_REUSE URL_PATH
 
-            echo "sleeping $benchmark_iteration_sleep"
-            sleep $benchmark_iteration_sleep
+              if test "$pbench_use" = true ; then
+                pbench_user_benchmark "$benchmark_test_config"
+              else
+                RESULTS_DIR=$RESULTS_DIR-$now	# add timestamp to non-pbench test directories
+                SERVER_RESULTS_DIR=$pbench_dir
+                $EXTENDED_TEST_BIN --ginkgo.focus="Load cluster" --viper-config=config/stress-mb 2>&1 | tee -a $run_log
+              fi
+
+              echo "sleeping $benchmark_iteration_sleep"
+              sleep $benchmark_iteration_sleep
+            done
           done
         done
       done
     done
-  done
+  done # route_term
 }
 
 # Process results collected in the benchmark run.
 process_results() {
-  local dir routes_f conns_per_thread_f delay_f ka_f tlsru_f run_time_f
+  local dir routes_f conns_per_thread_f delay_f ka_f tlsru_f run_time_f route_term
   local total_hits total_rps total_latency_95 target_dir
   local now=$(date '+%Y-%m-%d_%H.%M.%S')
   local archive_name=http-$now-${TEST_CFG}
@@ -405,19 +420,20 @@ process_results() {
 
   rm -rf $out_dir
   for dir in $(ls -1d $pbench_dir/${pbench_prefix}????r-???cpt-????d_ms-???ka-ytlsru-???s-*) ; do
-    set $(echo $dir | sed -E 's|^.*[-_]([0-9]*)r-([0-9]*)cpt-([0-9]*)d_ms-([0-9]*)ka-([yn])tlsru-([0-9]*)s-.*$|\1 \2 \3 \4 \5 \6|')
+    set $(echo $dir | sed -E 's|^.*[-_]([0-9]*)r-([0-9]*)cpt-([0-9]*)d_ms-([0-9]*)ka-([yn])tlsru-([0-9]*)s-([^-]*)-.*$|\1 \2 \3 \4 \5 \6 \7|')
     routes_f=$1
     conns_per_thread_f=$2
     delay_f=$3
     ka_f=$4
     tlsru_f=$5
     run_time_f=$6
-    echo "routes=$routes_f; conns_per_thread_f=$conns_per_thread_f; delay_f=$delay_f; ka_f=$ka_f; tlsru_f=$tlsru_f; run_time_f=$run_time_f"
+    route_term=$7
+    echo "routes=$routes_f; conns_per_thread_f=$conns_per_thread_f; delay_f=$delay_f; ka_f=$ka_f; tlsru_f=$tlsru_f; run_time_f=$run_time_f; route_term=$route_term"
 
     total_hits=$(awk 'BEGIN{i=0} /^200/ {i+=$2} END{print i}' $dir/mb-*/graphs/total_hits.txt 2>/dev/null)
     total_rps=$(echo "scale=3; ${total_hits:-0}/$run_time_f" | bc)
     total_latency_95=$(awk 'BEGIN{i=0} /^200/ {i=$3>i?$3:i} END{print i}' $dir/mb-*/graphs/total_latency_pctl.txt 2>/dev/null)
-    target_dir=$out_dir/processed-$TEST_CFG/${routes_f}r/${conns_per_thread_f}cpt/${ka_f}ka
+    target_dir=$out_dir/processed-$route_term-$TEST_CFG/${routes_f}r/${conns_per_thread_f}cpt/${ka_f}ka
     mkdir -p $target_dir
     if test "$total_rps" != 0 ; then
       printf "%s\n" "$total_rps" >> $target_dir/$file_total_rps
