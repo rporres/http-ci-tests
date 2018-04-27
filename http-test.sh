@@ -262,6 +262,8 @@ cl_load() {
 
   local project project_basename template p p_f i i_f
 
+  test "$SMOKE_TEST" = true && templates_total=1	# override the number of templates if this is just a smoke test
+
   for template in $templates ; do
     for p in $(seq $project_start $projects) ; do
       p_f=$(printf "%03d" $p)
@@ -453,7 +455,7 @@ pbench_move_results() {
   local now=$(date '+%Y-%m-%d_%H.%M.%S')
 
   if test "$MOVE_RESULTS" = true ; then
-    pbench-move-results --prefix="http-$now-${TEST_CFG}"
+    pbench-move-results --prefix="http-$now-${TEST_CFG}" 2>&1
   fi
 }
 
