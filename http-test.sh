@@ -12,7 +12,7 @@ http_ns_label=test=http		# label for namespaces holding application pods
 declare -a a_region		# array of old node region labels
 
 # pbench-specific variables ####################################################
-pbench_use=${SETUP_PBENCH:-true}
+pbench_use=true
 pbench_dir=/var/lib/pbench-agent	# pbench-agent directory
 pbench_prefix=pbench-user-benchmark_
 #pbench_containerized=y			# is pbench running containerized?
