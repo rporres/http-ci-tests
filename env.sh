@@ -28,3 +28,5 @@ export LOAD_GENERATOR_NODES=${LOAD_GENERATOR_NODES:-b5.lan}
 export CL_PROJECTS=${CL_PROJECTS:-10}
 # Number of templates to create per project.
 export CL_TEMPLATES=${CL_TEMPLATES:-1}
+# Run only a single HTTP test to establish functionality.
+export SMOKE_TEST=${SMOKE_TEST:-false}
