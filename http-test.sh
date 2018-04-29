@@ -15,6 +15,7 @@ declare -a a_region		# array of old node region labels
 pbench_use=true
 pbench_dir=/var/lib/pbench-agent	# pbench-agent directory
 pbench_prefix=pbench-user-benchmark_
+pbench_scraper_use=true			# use pbench scraper
 #pbench_containerized=y			# is pbench running containerized?
 pbench_mb_wrapper=./pbench-mb-wrapper.sh
 file_total_rps=rps.txt
@@ -318,7 +319,14 @@ pbench_user_benchmark() {
     die 1 "Containerized Pbench not yet supported."
   else
     # a regular pbench run
-    pbench-user-benchmark -C "$benchmark_test_config" -- $pbench_mb_wrapper
+    if test "$pbench_scraper_use" = true ; then
+      pbench-user-benchmark \
+        -C "$benchmark_test_config" \
+        --pbench-post='/usr/local/bin/pbscraper -i $benchmark_results_dir/tools-default -o $benchmark_results_dir; ansible-playbook -vv -i /root/svt/utils/pbwedge/hosts /root/svt/utils/pbwedge/main.yml -e new_file=$benchmark_results_dir/out.json' \
+        -- $pbench_mb_wrapper
+    else
+      pbench-user-benchmark -C "$benchmark_test_config" -- $pbench_mb_wrapper
+    fi
   fi
 }
 
@@ -424,7 +432,7 @@ process_results() {
   fi
 
   rm -rf $out_dir
-  for dir in $(ls -1d $pbench_dir/${pbench_prefix}????r-???cpt-????d_ms-???ka-ytlsru-???s-*) ; do
+  for dir in $(ls -1d $pbench_dir/${pbench_prefix}????r-???cpt-????d_ms-???ka-ytlsru-*s-*) ; do
     set $(echo $dir | sed -E 's|^.*[-_]([0-9]*)r-([0-9]*)cpt-([0-9]*)d_ms-([0-9]*)ka-([yn])tlsru-([0-9]*)s-([^-]*)-.*$|\1 \2 \3 \4 \5 \6 \7|')
     routes_f=$1
     conns_per_thread_f=$2
@@ -447,7 +455,11 @@ process_results() {
       printf "%s\n" "$total_latency_95" >> $target_dir/$file_total_latency
     fi
   done
-  tar Jcvf $out_dir/${archive_name}.tar.xz -C $pbench_dir $archive_name
+  # Tar-up the post-processed results and place them into the last directory (alphabetical sort)
+  tar Jcvf $dir/${archive_name}.tar.xz -C $pbench_dir $archive_name
+  echo "Processed results stored to: $dir"
+  # Remove out_dir, Pbench post-processing doesn't like random directories like this without Pbench directory structures
+  rm -rf $out_dir
 }
 
 # Move the benchmark results to a pbench server.
