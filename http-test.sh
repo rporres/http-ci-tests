@@ -27,7 +27,7 @@ export EXTENDED_TEST_BIN=/usr/libexec/atomic-openshift/extended.test	# atomic-op
 # mb-specific variables ########################################################
 routes_file=routes.txt		# a file with routes to pass to cluster loader
 WLG_IMAGE=jmencak/centos-stress	# Workload generator image
-RUN_TIME=120                    # benchmark run-time in seconds
+RUN_TIME=${RUN_TIME:-120}       # benchmark run-time in seconds
 MB_TLS_SESSION_REUSE=y		# use TLS session reuse [yn]
 
 ### Functions ##################################################################

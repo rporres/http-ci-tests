@@ -19,7 +19,7 @@ export MOVE_RESULTS=${MOVE_RESULTS:-false}
 export CONTAINERIZED=${CONTAINERIZED:-false}
 # HTTP-test specifics
 # A synchronization endpoint listening at :9090 by default.
-export GUN=${GUN:-172.16.113.1}
+export GUN=${GUN:-b1.lan}
 # username@server to scp results from workload generator node(s) to.
 export SERVER_RESULTS=${SERVER_RESULTS:-root@$GUN}
 # Comma separated load-generator nodes (use "oc get nodes" node names).
@@ -30,3 +30,5 @@ export CL_PROJECTS=${CL_PROJECTS:-10}
 export CL_TEMPLATES=${CL_TEMPLATES:-1}
 # Run only a single HTTP test to establish functionality.
 export SMOKE_TEST=${SMOKE_TEST:-false}
+# Run time of individual HTTP test iterations in seconds.
+export RUN_TIME=${RUN_TIME:-120}
