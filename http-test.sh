@@ -432,7 +432,7 @@ process_results() {
   fi
 
   rm -rf $out_dir
-  for dir in $(ls -1d $pbench_dir/${pbench_prefix}????r-???cpt-????d_ms-???ka-ytlsru-*s-*) ; do
+  for dir in $(find $pbench_dir -maxdepth 1 -type d -name ${pbench_prefix}????r-???cpt-????d_ms-???ka-ytlsru-*s-* | LC_COLLATE=C sort) ; do
     set $(echo $dir | sed -E 's|^.*[-_]([0-9]*)r-([0-9]*)cpt-([0-9]*)d_ms-([0-9]*)ka-([yn])tlsru-([0-9]*)s-([^-]*)-.*$|\1 \2 \3 \4 \5 \6 \7|')
     routes_f=$1
     conns_per_thread_f=$2
