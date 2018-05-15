@@ -5,6 +5,7 @@ ClusterLoader:
   cleanup: true
   projects:
     - num: 1
+      ifexists: delete
       basename: centos-stress
       tuning: default
       configmaps:

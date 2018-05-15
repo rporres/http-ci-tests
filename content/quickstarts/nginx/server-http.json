@@ -9,7 +9,7 @@
             "kind": "ReplicationController",
             "apiVersion": "v1",
             "metadata": {
-                "name": "nginx-${IDENTIFIER}"
+                "name": "nginx-http-${IDENTIFIER}"
             },
             "spec": {
                 "replicas": "${REPLICAS}",
@@ -20,16 +20,10 @@
                             {
                                 "image": "docker.io/jmencak/nginx",
                                 "imagePullPolicy": "IfNotPresent",
-                                "name": "nginx",
+                                "name": "nginx-http",
                                 "ports": [
                                     {
-                                        "name": "http",
                                         "containerPort": 8080,
-                                        "protocol": "TCP"
-                                    },
-                                    {
-                                        "name": "https",
-                                        "containerPort": 8443,
                                         "protocol": "TCP"
                                     }
                                 ],
@@ -61,12 +55,13 @@
                     },
                     "metadata": {
                         "labels": {
-                            "name": "nginx-${IDENTIFIER}"
+                            "name": "nginx-http-${IDENTIFIER}",
+                            "test": "http"
                         }
                     }
                 },
                 "selector": {
-                    "name": "nginx-${IDENTIFIER}"
+                    "name": "nginx-http-${IDENTIFIER}"
                 }
             }
         },
@@ -74,16 +69,13 @@
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "secure-nginx-route-example-${IDENTIFIER}"
+                "name": "nginx-http-${IDENTIFIER}"
             },
             "spec": {
                 "host": "${APPLICATION_DOMAIN}",
                 "to": {
                     "kind": "Service",
-                    "name": "secure-nginx-${IDENTIFIER}"
-                },
-                "tls": {
-                    "termination": "passthrough"
+                    "name": "nginx-http-${IDENTIFIER}"
                 }
             }
         },
@@ -91,9 +83,9 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "secure-nginx-${IDENTIFIER}",
+                "name": "nginx-http-${IDENTIFIER}",
                 "labels": {
-                    "name": "secure-nginx"
+                    "name": "nginx-http"
                 },
                 "annotations": {
                     "description": "Exposes and load balances the application pods"
@@ -101,15 +93,15 @@
             },
             "spec": {
                 "selector": {
-                    "name": "nginx-${IDENTIFIER}"
+                    "name": "nginx-http-${IDENTIFIER}"
                 },
                 "type": "NodePort",
                 "ports": [
                     {
-                        "name": "https",
+                        "name": "http",
                         "protocol": "TCP",
-                        "port": 8443,
-                        "targetPort": 8443
+                        "port": 8080,
+                        "targetPort": 8080
                     }
                 ]
             }

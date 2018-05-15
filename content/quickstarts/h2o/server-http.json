@@ -1,0 +1,129 @@
+{
+    "apiVersion": "v1",
+    "kind": "Template",
+    "metadata": {
+        "name": "h2o"
+    },
+    "objects": [
+        {
+            "kind": "ReplicationController",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "h2o-http-${IDENTIFIER}"
+            },
+            "spec": {
+                "replicas": "${REPLICAS}",
+                "template": {
+                    "spec": {
+                        "restartPolicy": "Always",
+                        "containers": [
+                            {
+                                "image": "docker.io/jmencak/h2o",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "h2o-http",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "resources": {
+                                   "limits": {
+                                        "cpu": "800m",
+                                        "memory": "20Mi"
+                                    },
+                                    "requests": {
+                                        "cpu": "10m",
+                                        "memory": "10Mi"
+                                    }
+                                },
+                                "securityContext": {
+                                    "capabilities": {
+                                        "drop": [
+                                            "KILL",
+                                            "MKNOD",
+                                            "SETGID",
+                                            "SETUID",
+                                            "SYS_CHROOT"
+                                        ]
+                                    },
+                                    "privileged": false
+                                },
+                                "terminationMessagePath": "/dev/termination-log"
+                            }
+                        ]
+                    },
+                    "metadata": {
+                        "labels": {
+                            "name": "h2o-http-${IDENTIFIER}",
+                            "test": "http"
+                        }
+                    }
+                },
+                "selector": {
+                    "name": "h2o-http-${IDENTIFIER}"
+                }
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "h2o-http-${IDENTIFIER}"
+            },
+            "spec": {
+                "host": "${APPLICATION_DOMAIN}",
+                "to": {
+                    "kind": "Service",
+                    "name": "h2o-http-${IDENTIFIER}"
+                }
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "h2o-http-${IDENTIFIER}",
+                "labels": {
+                    "name": "h2o-http"
+                },
+                "annotations": {
+                    "description": "Exposes and load balances the application pods"
+                }
+            },
+            "spec": {
+                "selector": {
+                    "name": "h2o-http-${IDENTIFIER}"
+                },
+                "type": "NodePort",
+                "ports": [
+                    {
+                        "name": "http",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    }
+                ]
+            }
+        }
+    ],
+    "parameters": [
+        {
+            "name": "APPLICATION_DOMAIN",
+            "displayName": "Application Hostname",
+            "description": "The exposed hostname that will route to the h2o-* service, if left blank a value will be defaulted.",
+            "value": ""
+        },
+        {
+            "name": "REPLICAS",
+            "displayName": "Number of replicas",
+            "description": "Start with the number of replicas.",
+            "value": "1"
+        },
+        {
+            "name": "IDENTIFIER",
+            "description": "Number to append to the name of resources",
+            "value": "1"
+        }
+    ]
+}

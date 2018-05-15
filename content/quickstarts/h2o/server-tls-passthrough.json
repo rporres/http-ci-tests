@@ -2,14 +2,14 @@
     "apiVersion": "v1",
     "kind": "Template",
     "metadata": {
-        "name": "nginx"
+        "name": "h2o"
     },
     "objects": [
         {
             "kind": "ReplicationController",
             "apiVersion": "v1",
             "metadata": {
-                "name": "nginx-${IDENTIFIER}"
+                "name": "h2o-passthrough-${IDENTIFIER}"
             },
             "spec": {
                 "replicas": "${REPLICAS}",
@@ -18,12 +18,18 @@
                         "restartPolicy": "Always",
                         "containers": [
                             {
-                                "image": "docker.io/jmencak/nginx",
+                                "image": "docker.io/jmencak/h2o",
                                 "imagePullPolicy": "IfNotPresent",
-                                "name": "nginx",
+                                "name": "h2o-passthrough",
                                 "ports": [
                                     {
+                                        "name": "http",
                                         "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    },
+                                    {
+                                        "name": "https",
+                                        "containerPort": 8443,
                                         "protocol": "TCP"
                                     }
                                 ],
@@ -55,12 +61,13 @@
                     },
                     "metadata": {
                         "labels": {
-                            "name": "nginx-${IDENTIFIER}"
+                            "name": "h2o-passthrough-${IDENTIFIER}",
+                            "test": "http"
                         }
                     }
                 },
                 "selector": {
-                    "name": "nginx-${IDENTIFIER}"
+                    "name": "h2o-passthrough-${IDENTIFIER}"
                 }
             }
         },
@@ -68,13 +75,16 @@
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "nginx-route-example-${IDENTIFIER}"
+                "name": "h2o-passthrough-${IDENTIFIER}"
             },
             "spec": {
                 "host": "${APPLICATION_DOMAIN}",
                 "to": {
                     "kind": "Service",
-                    "name": "nginx-${IDENTIFIER}"
+                    "name": "h2o-passthrough-${IDENTIFIER}"
+                },
+                "tls": {
+                    "termination": "passthrough"
                 }
             }
         },
@@ -82,9 +92,9 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "nginx-${IDENTIFIER}",
+                "name": "h2o-passthrough-${IDENTIFIER}",
                 "labels": {
-                    "name": "nginx"
+                    "name": "h2o-passthrough"
                 },
                 "annotations": {
                     "description": "Exposes and load balances the application pods"
@@ -92,15 +102,15 @@
             },
             "spec": {
                 "selector": {
-                    "name": "nginx-${IDENTIFIER}"
+                    "name": "h2o-passthrough-${IDENTIFIER}"
                 },
                 "type": "NodePort",
                 "ports": [
                     {
-                        "name": "first",
+                        "name": "https",
                         "protocol": "TCP",
-                        "port": 8080,
-                        "targetPort": 8080
+                        "port": 8443,
+                        "targetPort": 8443
                     }
                 ]
             }
@@ -110,7 +120,7 @@
         {
             "name": "APPLICATION_DOMAIN",
             "displayName": "Application Hostname",
-            "description": "The exposed hostname that will route to the nginx-* service, if left blank a value will be defaulted.",
+            "description": "The exposed hostname that will route to the h2o-* service, if left blank a value will be defaulted.",
             "value": ""
         },
         {

@@ -9,6 +9,8 @@ param_name=()			# parameters, name
 param_fn=()			# parameters, function name
 param_hlp=()			# parameters, help
 http_ns_label=test=http		# label for namespaces holding application pods
+http_pod_label=$http_ns_label	# label for application pods
+http_server=h2o			# backend server for http tests (h2o|nginx)
 declare -a a_region		# array of old node region labels
 
 # pbench-specific variables ####################################################
@@ -84,7 +86,6 @@ param_set() {
     param_hlp[$i]="$hlp"
     ((i++))
   done << _PARAM_
-wlg_project-delete|wlg_project_delete|Delete the workload generator project.
 router_liveness_probe-disable|router_liveness_probe|Increase period seconds for the router liveness probe.
 load_generator-label|load_generator_nodes_label|Label and taint the node(s) for the load generator pod(s).
 load_generator-portrange|load_generator_nodes_local_port_range|Increase local port range on the load generator node(s).
@@ -116,12 +117,6 @@ param2fn() {
   done
 
   return 1
-}
-
-# Delete the workload generator project.
-wlg_project_delete() {
-  # TODO: golang cluster loader
-  oc delete project centos-stress0 >/dev/null 2>&1
 }
 
 # Increase period seconds for the router liveness probe.
@@ -229,7 +224,7 @@ cl_max_pods_not_running() {
   local not_running
 
   while true ; do
-    not_running=$(oc get pods --all-namespaces --no-headers | grep nginx | grep -E -v '(Running|Completed|Unknown)' | wc -l)
+    not_running=$(oc get pods --selector $http_ns_label --all-namespaces --no-headers | grep -E -v '(Running|Completed|Unknown)' | wc -l)
     test "$not_running" -le "$max_not_running" && break
     echo "$not_running pods not running"
     sleep 1
@@ -254,8 +249,8 @@ cl_new_project_or_reuse() {
 
 # Populate the cluster with application pods and routes.
 cl_load() {
-  local nginx_quickstart_dir="content/quickstarts/nginx"
-  local templates="$nginx_quickstart_dir/nginx.json $nginx_quickstart_dir/nginx-tls-edge.json $nginx_quickstart_dir/nginx-tls-passthrough.json $nginx_quickstart_dir/nginx-tls-reencrypt.json"
+  local server_quickstart_dir="content/quickstarts/$http_server"
+  local templates="$server_quickstart_dir/server-http.json $server_quickstart_dir/server-tls-edge.json $server_quickstart_dir/server-tls-passthrough.json $server_quickstart_dir/server-tls-reencrypt.json"
   local projects=${CL_PROJECTS:-10}		# 10, 30, 60, 180
   local project_start=1
   local templates_total=${CL_TEMPLATES:-50}	# number of templates per project
@@ -347,9 +342,9 @@ benchmark_run() {
 
   for route_term in "mix" "http" "edge" "passthrough" "reencrypt" ; do
     case $route_term in
-      mix) mb_targets="(nginx|edge|passthrough|reencrypt)-0.[0-0]\. (nginx|edge|passthrough|reencrypt)-0.[0-9]\."
+      mix) mb_targets="(http|edge|passthrough|reencrypt)-0.1\. (http|edge|passthrough|reencrypt)-0.[0-9]\."
       ;;
-      http) mb_targets="nginx-0.[0-9]\."
+      http) mb_targets="http-0.[0-9]\."
       ;;
       edge) mb_targets="edge-0.[0-9]\."
       ;;

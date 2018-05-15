@@ -9,7 +9,7 @@
             "kind": "ReplicationController",
             "apiVersion": "v1",
             "metadata": {
-                "name": "nginx-${IDENTIFIER}"
+                "name": "nginx-reencrypt-${IDENTIFIER}"
             },
             "spec": {
                 "replicas": "${REPLICAS}",
@@ -20,7 +20,7 @@
                             {
                                 "image": "docker.io/jmencak/nginx",
                                 "imagePullPolicy": "IfNotPresent",
-                                "name": "nginx",
+                                "name": "nginx-reencrypt",
                                 "ports": [
                                     {
                                         "name": "http",
@@ -61,12 +61,13 @@
                     },
                     "metadata": {
                         "labels": {
-                            "name": "nginx-${IDENTIFIER}"
+                            "name": "nginx-reencrypt-${IDENTIFIER}",
+                            "test": "http"
                         }
                     }
                 },
                 "selector": {
-                    "name": "nginx-${IDENTIFIER}"
+                    "name": "nginx-reencrypt-${IDENTIFIER}"
                 }
             }
         },
@@ -74,13 +75,13 @@
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "secure-nginx-route-example-${IDENTIFIER}"
+                "name": "nginx-reencrypt-${IDENTIFIER}"
             },
             "spec": {
                 "host": "${APPLICATION_DOMAIN}",
                 "to": {
                     "kind": "Service",
-                    "name": "secure-nginx-${IDENTIFIER}"
+                    "name": "nginx-reencrypt-${IDENTIFIER}"
                 },
                 "tls": {
                     "termination": "reencrypt",
@@ -94,9 +95,9 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "secure-nginx-${IDENTIFIER}",
+                "name": "nginx-reencrypt-${IDENTIFIER}",
                 "labels": {
-                    "name": "secure-nginx"
+                    "name": "nginx-reencrypt"
                 },
                 "annotations": {
                     "description": "Exposes and load balances the application pods"
@@ -104,7 +105,7 @@
             },
             "spec": {
                 "selector": {
-                    "name": "nginx-${IDENTIFIER}"
+                    "name": "nginx-reencrypt-${IDENTIFIER}"
                 },
                 "type": "NodePort",
                 "ports": [
