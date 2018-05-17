@@ -220,7 +220,7 @@ pbench_clear_results() {
 }
 
 cl_max_pods_not_running() {
-  local max_not_running="${1:-10}"
+  local max_not_running="${1:-20}"
   local not_running
 
   while true ; do
@@ -276,7 +276,7 @@ cl_load() {
         oc process -pIDENTIFIER=$i_f -f $template | oc create -f- -n $project
         i=$((i+1))
 
-        cl_max_pods_not_running 10
+        cl_max_pods_not_running 20
       done
     done
   done
