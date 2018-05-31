@@ -27,6 +27,26 @@
                         "effect": "NoSchedule"
                     }
                 ],
+                "affinity": {
+                    "podAntiAffinity": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": [
+                            {   
+                                "labelSelector": {
+                                    "matchExpressions": [
+                                        {   
+                                            "operator": "In",
+                                            "values": [
+                                                "centos-stress"
+                                            ],
+                                            "key": "test"
+                                        }
+                                    ]
+                                },
+                                "topologyKey": "kubernetes.io/hostname"
+                            }
+                        ]
+                    }
+                },
                 "containers": [
                     {
                         "env": [
