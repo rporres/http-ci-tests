@@ -28,9 +28,9 @@ export LOAD_GENERATOR_NODES=${LOAD_GENERATOR_NODES:-b5.lan}
 export CL_PROJECTS=${CL_PROJECTS:-10}
 # Number of templates to create per project.
 export CL_TEMPLATES=${CL_TEMPLATES:-1}
+# Run time of individual HTTP test iterations in seconds.
+export RUN_TIME=${RUN_TIME:-60}
 # Run only a single HTTP test to establish functionality.
 export SMOKE_TEST=${SMOKE_TEST:-false}
-# Run time of individual HTTP test iterations in seconds.
-export RUN_TIME=${RUN_TIME:-120}
 # Delete all namespaces with application pods, services and routes created for the purposes of HTTP tests.
 export NAMESPACE_CLEANUP=${NAMESPACE_CLEANUP:-true}
