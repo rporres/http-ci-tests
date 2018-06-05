@@ -32,3 +32,5 @@ export CL_TEMPLATES=${CL_TEMPLATES:-1}
 export SMOKE_TEST=${SMOKE_TEST:-false}
 # Run time of individual HTTP test iterations in seconds.
 export RUN_TIME=${RUN_TIME:-120}
+# Delete all namespaces with application pods, services and routes created for the purposes of HTTP tests.
+export NAMESPACE_CLEANUP=${NAMESPACE_CLEANUP:-true}

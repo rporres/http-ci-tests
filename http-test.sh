@@ -97,7 +97,7 @@ benchmark-run|benchmark_run|Run the HTTP(s) benchmark against routes in '$routes
 process-results|process_results|Process results collected in the benchmark run.
 results-move|pbench_move_results|Move the benchmark results to a pbench server
 load_generator-unlabel|load_generator_nodes_unlabel|Unlabel and remove taints on the node(s) for the load generator pod(s).
-namespaces-cleanup|namespaces_cleanup|Delete all namespaces with application pods and routes created for the purposes of HTTP tests.
+namespace-cleanup|namespace_cleanup|Delete all namespaces with application pods, services and routes created for the purposes of HTTP tests.
 _PARAM_
   IFS="$old_ifs"
 }
@@ -466,8 +466,10 @@ pbench_move_results() {
   fi
 }
 
-# Delete all namespaces with application pods and routes created for the purposes of HTTP tests.
-namespaces_cleanup() {
+# Delete all namespaces with application pods, services and routes created for the purposes of HTTP tests.
+namespace_cleanup() {
+  test "$NAMESPACE_CLEANUP" = true || return 0
+
   oc delete ns --selector $http_ns_label
 }
 
