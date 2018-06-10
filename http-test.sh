@@ -441,7 +441,7 @@ process_results() {
     total_hits=$(awk 'BEGIN{i=0} /^200/ {i+=$2} END{print i}' $dir/mb-*/graphs/total_hits.txt 2>/dev/null)
     total_rps=$(echo "scale=3; ${total_hits:-0}/$run_time_f" | bc)
     total_latency_95=$(awk 'BEGIN{i=0} /^200/ {i=$3>i?$3:i} END{print i}' $dir/mb-*/graphs/total_latency_pctl.txt 2>/dev/null)
-    target_dir=$out_dir/processed-$route_term-$TEST_CFG/${routes_f}r/${conns_per_thread_f}cpt/${ka_f}ka
+    target_dir=$out_dir/processed-$route_term/${routes_f}r/${conns_per_thread_f}cpt/${ka_f}ka
     mkdir -p $target_dir
     if test "$total_rps" != 0 ; then
       printf "%s\n" "$total_rps" >> $target_dir/$file_total_rps
