@@ -317,7 +317,7 @@ pbench_user_benchmark() {
     if test "$pbench_scraper_use" = true ; then
       pbench-user-benchmark \
         -C "$benchmark_test_config" \
-        --pbench-post='/usr/local/bin/pbscraper -i $benchmark_results_dir/tools-default -o $benchmark_results_dir; ansible-playbook -vv -i /root/svt/utils/pbwedge/hosts /root/svt/utils/pbwedge/main.yml -e new_file=$benchmark_results_dir/out.json' \
+        --pbench-post='/usr/local/bin/pbscraper -i $benchmark_results_dir/tools-default -o $benchmark_results_dir; ansible-playbook -vv -i /root/svt/utils/pbwedge/hosts /root/svt/utils/pbwedge/main.yml -e new_file=$benchmark_results_dir/out.json -e git_test_branch='http_$benchmark_test_config \
         -- $pbench_mb_wrapper
     else
       pbench-user-benchmark -C "$benchmark_test_config" -- $pbench_mb_wrapper
@@ -340,7 +340,9 @@ benchmark_run() {
     die 1 "'$EXTENDED_TEST_BIN' not executable, install atomic-openshift-tests."
   fi
 
-  for route_term in "mix" "http" "edge" "passthrough" "reencrypt" ; do
+  # All possible route terminations are: mix,http,edge,passthrough,reencrypt
+  # For the purposes of CI, use "mix" only
+  for route_term in ${ROUTE_TERMINATION//,/ } ; do
     case $route_term in
       mix) mb_targets="(http|edge|passthrough|reencrypt)-0.1\. (http|edge|passthrough|reencrypt)-0.[0-9]\."
       ;;
