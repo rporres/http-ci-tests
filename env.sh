@@ -30,7 +30,7 @@ export CL_PROJECTS=${CL_PROJECTS:-10}
 export CL_TEMPLATES=${CL_TEMPLATES:-1}
 # Run time of individual HTTP test iterations in seconds.
 export RUN_TIME=${RUN_TIME:-120}
-# Perform the test for the following (comma-separated) route terminations
+# Perform the test for the following (comma-separated) route terminations: mix,http,edge,passthrough,reencrypt
 export ROUTE_TERMINATION=${ROUTE_TERMINATION:-mix}
 # Run only a single HTTP test to establish functionality.
 export SMOKE_TEST=${SMOKE_TEST:-false}
