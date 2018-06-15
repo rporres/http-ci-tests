@@ -146,8 +146,8 @@ export CONTAINERIZED=${CONTAINERIZED:-false}
 export GUN=${GUN:-b1.lan}
 # username@server to scp results from workload generator node(s) to.
 export SERVER_RESULTS=${SERVER_RESULTS:-root@$GUN}
-# Comma separated load-generator nodes (use "oc get nodes" node names).
-export LOAD_GENERATOR_NODES=${LOAD_GENERATOR_NODES:-b5.lan}
+# Load-generator nodes described by an extended regular expression (use "oc get nodes" node names).
+export LOAD_GENERATOR_NODES=${LOAD_GENERATOR_NODES:-b[5-5].lan}
 # Number of projects to create for each type of application (4 types currently).
 export CL_PROJECTS=${CL_PROJECTS:-10}
 # Number of templates to create per project.
@@ -172,29 +172,31 @@ router_liveness_probe() {
   #oc set probe dc/router --liveness --remove -n default
 }
 
+load_generator_nodes_get() {
+  oc get nodes --no-headers | awk '{print $1}' | grep -E "$LOAD_GENERATOR_NODES"
+}
+
 load_generator_nodes_label_taint() {
-  local label="${1:-y}"	# unlabel/remove taint if not 'y'
-  local i node placement taint region
+  local label="${1:-y}" # unlabel/remove taint if not 'y'
+  local i node placement taint region region_old
 
   if test "$label" = y ; then
     placement=placement=test
-    region=region=primary
     taint=placement=test:NoSchedule
   else
     placement=placement-
-    region=region=$region_old
     taint=placement-
   fi
 
   i=0
-  for node in ${LOAD_GENERATOR_NODES//,/ } ; do
+  for node in $(load_generator_nodes_get) ; do
     if test "$label" = y ; then
       # save old region
       a_region[$i]=$(oc get node "$node" --template '{{printf "%s\n" .metadata.labels.region}}')
       region=region=primary
     else
       # get old region from "stored regions" array
-      region=region="${a_region[$i]}"
+      region=region=${a_region[$i]:-primary}
     fi
     oc label node $node $placement
     oc label node $node $region --overwrite
@@ -218,7 +220,7 @@ load_generator_nodes_local_port_range() {
   local node
   local sysctl_file=/etc/sysctl.d/50-mb-local_port_range.conf
 
-  for node in ${LOAD_GENERATOR_NODES//,/ } ; do
+  for node in $(load_generator_nodes_get) ; do
     ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$node <<_SSH_BLOCK_
 echo 'net.ipv4.ip_local_port_range = 1000 65535' > $sysctl_file
 restorecon $sysctl_file
@@ -372,7 +374,7 @@ pbench_user_benchmark() {
 # Run the HTTP(s) benchmark against routes in '$routes_file'.
 benchmark_run() {
   local routes routes_f delay_f mb_conns_per_target conns_per_thread_f ka_f now benchmark_test_config
-  local router_term mb_targets
+  local router_term mb_targets load_generator_nodes
   local run_log=run.log			# a log file for non-pbench runs
   local ret				# return value
   local benchmark_iteration_sleep=0	# sleep for some time between test iterations
@@ -383,6 +385,9 @@ benchmark_run() {
   if ! test -x ${EXTENDED_TEST_BIN} ; then
     die 1 "'$EXTENDED_TEST_BIN' not executable, install atomic-openshift-tests."
   fi
+
+  load_generator_nodes=$(load_generator_nodes_get | wc -l)
+  test "$load_generator_nodes" -ge 1 || die 1 "couldn't find any load generator nodes"
 
   # All possible route terminations are: mix,http,edge,passthrough,reencrypt
   # For the purposes of CI, use "mix" only
@@ -439,11 +444,13 @@ benchmark_run() {
 
               export WLG_IMAGE RUN_TIME RESULTS_DIR SERVER_RESULTS_DIR MB_DELAY MB_TARGETS MB_CONNS_PER_TARGET MB_KA_REQUESTS MB_TLS_SESSION_REUSE URL_PATH
 
+              sed -i "s|        - num:.*|        - num: $load_generator_nodes|" config/stress-mb.yaml	# ugly hack, TODO: add support to golang cluster loader for ENV variables
               if test "$pbench_use" = true ; then
                 pbench_user_benchmark "$benchmark_test_config"
               else
                 RESULTS_DIR=$RESULTS_DIR-$now	# add timestamp to non-pbench test directories
                 SERVER_RESULTS_DIR=$pbench_dir
+
                 $EXTENDED_TEST_BIN --ginkgo.focus="Load cluster" --viper-config=config/stress-mb 2>&1 | tee -a $run_log
               fi
 

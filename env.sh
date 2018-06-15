@@ -22,8 +22,8 @@ export CONTAINERIZED=${CONTAINERIZED:-false}
 export GUN=${GUN:-b1.lan}
 # username@server to scp results from workload generator node(s) to.
 export SERVER_RESULTS=${SERVER_RESULTS:-root@$GUN}
-# Comma separated load-generator nodes (use "oc get nodes" node names).
-export LOAD_GENERATOR_NODES=${LOAD_GENERATOR_NODES:-b5.lan}
+# Load-generator nodes described by an extended regular expression (use "oc get nodes" node names).
+export LOAD_GENERATOR_NODES=${LOAD_GENERATOR_NODES:-b[5-5].lan}
 # Number of projects to create for each type of application (4 types currently).
 export CL_PROJECTS=${CL_PROJECTS:-10}
 # Number of templates to create per project.
