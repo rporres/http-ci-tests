@@ -103,6 +103,14 @@
                                 "value": "${MB_CONNS_PER_TARGET}"
                             },
                             {
+                                "name": "MB_METHOD",
+                                "value": "${MB_METHOD}"
+                            },
+                            {
+                                "name": "MB_REQUEST_BODY_SIZE",
+                                "value": "${MB_REQUEST_BODY_SIZE}"
+                            },
+                            {
                                 "name": "MB_KA_REQUESTS",
                                 "value": "${MB_KA_REQUESTS}"
                             },
@@ -278,6 +286,18 @@
             "value": "1"
         },
         {
+            "name": "MB_METHOD",
+            "displayName": "HTTP method",
+            "description": "HTTP method (GET by default).",
+            "value": "GET"
+        },
+        {
+            "name": "MB_REQUEST_BODY_SIZE",
+            "displayName": "Body length of POST requests in characters",
+            "description": "Body length of POST requests in characters.",
+            "value": "128"
+        },
+        {
             "name": "MB_KA_REQUESTS",
             "displayName": "How many HTTP keep-alive requests to send per connection",
             "description": "How many HTTP keep-alive requests to send per connection before sending Connection: close header.",
@@ -285,9 +305,9 @@
         },
         {
             "name": "MB_TLS_SESSION_REUSE",
-            "displayName": "Enable TLS session reuse for mb",
-            "description": "Enable TLS session reuse for mb.",
-            "value": "n"
+            "displayName": "Enable/Disable TLS session reuse for mb",
+            "description": "Enable/Disable TLS session reuse for mb.",
+            "value": "true"
         },
         {
             "name": "MB_RAMP_UP",

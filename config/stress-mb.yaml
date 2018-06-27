@@ -27,6 +27,8 @@ ClusterLoader:
             - MB_DELAY: 		# maximum delay between client requests in ms
             - MB_TARGETS: 		# extended RE (egrep) to filter target routes
             - MB_CONNS_PER_TARGET: 	# how many connections per target route
+            - MB_METHOD: 		# HTTP method (GET by default)
+            - MB_REQUEST_BODY_SIZE:	# body length of POST requests in characters
             - MB_KA_REQUESTS: 		# how many HTTP keep-alive requests to send before sending "Connection: close".
             - MB_TLS_SESSION_REUSE: 	# use TLS session reuse [yn]
             - MB_RAMP_UP: 0		# thread ramp-up time in seconds

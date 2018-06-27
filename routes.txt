@@ -1,0 +1,4 @@
+h2o-http-001-server-http-001.router.default.svc.cluster.local
+h2o-edge-001-server-tls-edge-001.router.default.svc.cluster.local
+h2o-passthrough-001-server-tls-passthrough-001.router.default.svc.cluster.local
+h2o-reencrypt-001-server-tls-reencrypt-001.router.default.svc.cluster.local
