@@ -21,6 +21,7 @@ pbench_prefix=pbench-user-benchmark_
 pbench_mb_wrapper=./pbench-mb-wrapper.sh
 file_total_rps=rps.txt
 file_total_latency=latency_95.txt
+file_quit=quit				# if this file is detected during test runs, abort
 
 # Golang cluster loader binary #################################################
 export EXTENDED_TEST_BIN=/usr/libexec/atomic-openshift/extended.test	# atomic-openshift-tests package
@@ -470,7 +471,7 @@ benchmark_run() {
               fi
 
               ret=$?
-              test "$SMOKE_TEST" = true && return $ret
+              test "$SMOKE_TEST" = true -o -e "$file_quit" && return $ret
               echo "sleeping $benchmark_iteration_sleep"
               sleep $benchmark_iteration_sleep
             done
