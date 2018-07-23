@@ -28,7 +28,7 @@ export EXTENDED_TEST_BIN=/usr/libexec/atomic-openshift/extended.test	# atomic-op
 
 # mb-specific variables ########################################################
 routes_file=routes.txt		# a file with routes to pass to cluster loader
-WLG_IMAGE=jmencak/centos-stress	# workload generator image
+WLG_IMAGE=docker.io/jmencak/centos-stress	# workload generator image
 : ${RUN_TIME:=120}		# benchmark run-time in seconds
 : ${MB_TLS_SESSION_REUSE:=true}	# use TLS session reuse [yn]
 : ${MB_METHOD:=GET}		# HTTP method to use for backend servers (GET/POST)
