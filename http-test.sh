@@ -178,11 +178,18 @@ EOF
 
 # Increase period seconds for the router liveness probe.
 router_liveness_probe() {
-  # Increase period seconds for the router liveness probe.
-  oc set probe dc/router --liveness --period-seconds=$RUN_TIME -n default
+  local deployment probe_set
 
-  # Alternatively, delete the router liveness probe.
-  #oc set probe dc/router --liveness --remove -n default
+  # Increase period seconds for the router liveness probe.
+  for deployment in dc/router deployment/router
+  do
+    oc get $deployment -n default >/dev/null || continue
+    oc set probe $deployment --liveness --period-seconds=$RUN_TIME -n default
+    # Alternatively, delete the router liveness probe.
+    #oc set probe dc/router --liveness --remove -n default
+    probe_set=true
+  done
+  test "$probe_set" || die 1 "Couldn't set liveness probe."
 }
 
 load_generator_nodes_get() {
