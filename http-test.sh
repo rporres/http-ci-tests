@@ -178,18 +178,27 @@ EOF
 
 # Increase period seconds for the router liveness probe.
 router_liveness_probe() {
-  local deployment probe_set
+  local deployment selector d probe_set
 
   # Increase period seconds for the router liveness probe.
-  for deployment in dc/router deployment/router
+  for deployment in dc deployment
   do
-    oc get $deployment -n default >/dev/null || continue
-    oc set probe $deployment --liveness --period-seconds=$RUN_TIME -n default
-    # Alternatively, delete the router liveness probe.
-    #oc set probe dc/router --liveness --remove -n default
-    probe_set=true
+    for selector in router=router app=router
+    do
+      for d in $(oc get $deployment --selector=$selector --template='{{range .items}}{{.metadata.name}}|{{.metadata.namespace}}{{"\n"}}{{end }}' --all-namespaces)
+      do
+        set -- ${d//|/ }
+        d_name=$1
+        d_namespace=$2
+        oc set probe $deployment/$d_name --liveness --period-seconds=$RUN_TIME -n $d_namespace
+        # Alternatively, delete the router liveness probe.
+        #oc set probe $deployment/$d_name --liveness --remove -n $d_namespace
+        probe_set=true
+      done
+    done
   done
-  test "$probe_set" || die 1 "Couldn't set liveness probe."
+
+  test "$probe_set" || die 1 "Couldn't set router liveness probe."
 }
 
 load_generator_nodes_get() {
