@@ -281,7 +281,7 @@ pbench_server_cfg() {
   local pbench_cfg=/opt/pbench-agent/config/pbench-agent.cfg
   local ssh_scp_opts='-o StrictHostKeyChecking=no -i /root/.ssh/id_rsa'
 
-  if test "$PBENCH_SERVER" -a test "${SETUP_PBENCH}" = true ; then
+  if test "$PBENCH_SERVER" -a "${SETUP_PBENCH}" = true ; then
     sed -E -i "s;^\s*#?\s*(pbench_results_redirector|pbench_web_server)\s*=.*;\1=$PBENCH_SERVER;" $pbench_cfg
     sed -E -i "s;^\s*#?\s*(ssh_opts|scp_opts)\s*=.*;\1=$ssh_scp_opts;" $pbench_cfg
   fi
