@@ -18,4 +18,4 @@ URL_PATH=$URL_PATH
 EOF
 
 export SERVER_RESULTS_DIR=$benchmark_run_dir	# /var/lib/pbench-agent/xyz defined by pbench
-$EXTENDED_TEST_BIN --ginkgo.focus="Load cluster" --viper-config=config/stress-mb
+VIPERCONFIG=config/stress-mb $EXTENDED_TEST_BIN run-test "[Feature:Performance][Serial][Slow] Load cluster should load the cluster [Suite:openshift]"

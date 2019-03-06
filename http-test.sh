@@ -24,7 +24,7 @@ file_total_latency=latency_95.txt
 file_quit=quit				# if this file is detected during test runs, abort
 
 # Golang cluster loader binary #################################################
-export EXTENDED_TEST_BIN=/usr/libexec/atomic-openshift/extended.test	# atomic-openshift-tests package
+export EXTENDED_TEST_BIN=/bin/openshift-tests	# part of openshift/origin-tests:v4.0 image
 
 # mb-specific variables ########################################################
 routes_file=routes.txt		# a file with routes to pass to cluster loader
@@ -413,7 +413,7 @@ benchmark_run() {
 
   # Dependency checks
   if ! test -x ${EXTENDED_TEST_BIN} ; then
-    die 1 "'$EXTENDED_TEST_BIN' not executable, install atomic-openshift-tests."
+    die 1 "'$EXTENDED_TEST_BIN' not executable, copy it from openshift/origin-tests:v4.0 image."
   fi
 
   load_generator_nodes=$(load_generator_nodes_get | wc -l)
@@ -483,7 +483,7 @@ benchmark_run() {
                 RESULTS_DIR=$RESULTS_DIR-$now	# add timestamp to non-pbench test directories
                 SERVER_RESULTS_DIR=$pbench_dir
 
-                $EXTENDED_TEST_BIN --ginkgo.focus="Load cluster" --viper-config=config/stress-mb 2>&1 | tee -a $run_log
+		VIPERCONFIG=config/stress-mb $EXTENDED_TEST_BIN run-test "[Feature:Performance][Serial][Slow] Load cluster should load the cluster [Suite:openshift]" 2>&1 | tee -a $run_log
               fi
 
               ret=$?
