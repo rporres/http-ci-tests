@@ -183,7 +183,7 @@ router_liveness_probe() {
   # Increase period seconds for the router liveness probe.
   for deployment in dc deployment
   do
-    for selector in router=router app=router
+    for selector in router=router app=router ingress.openshift.io/clusteringress=default
     do
       for d in $(oc get $deployment --selector=$selector --template='{{range .items}}{{.metadata.name}}|{{.metadata.namespace}}{{"\n"}}{{end }}' --all-namespaces)
       do
