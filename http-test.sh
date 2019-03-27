@@ -251,7 +251,7 @@ load_generator_nodes_local_port_range() {
 
   for node in $(load_generator_nodes_get) ; do
     ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$node <<_SSH_BLOCK_
-echo 'net.ipv4.ip_local_port_range = 1000 65535' > $sysctl_file
+echo 'net.ipv4.ip_local_port_range = 1024 65535' > $sysctl_file
 restorecon $sysctl_file
 sysctl -p $sysctl_file
 _SSH_BLOCK_
