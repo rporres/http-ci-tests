@@ -450,7 +450,7 @@ benchmark_run() {
       for MB_DELAY in 0 ; do
         delay_f=$(printf "%04d" $MB_DELAY)
 
-        # make sure you set 'net.ipv4.ip_local_port_range = 1000 65535' on the client machine
+        # make sure you set 'net.ipv4.ip_local_port_range = 1024 65535' on the client machine
         if   test $routes -le 100 ; then
           mb_conns_per_target="1 40 200"
         elif test $routes -le 500 ; then
