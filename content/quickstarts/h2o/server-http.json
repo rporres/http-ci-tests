@@ -12,7 +12,7 @@
                 "name": "h2o-http-${IDENTIFIER}"
             },
             "spec": {
-                "replicas": "${REPLICAS}",
+                "replicas": 1,
                 "template": {
                     "spec": {
                         "restartPolicy": "Always",
@@ -103,12 +103,6 @@
             "displayName": "Application Hostname",
             "description": "The exposed hostname that will route to the h2o-* service, if left blank a value will be defaulted.",
             "value": ""
-        },
-        {
-            "name": "REPLICAS",
-            "displayName": "Number of replicas",
-            "description": "Start with the number of replicas.",
-            "value": "1"
         },
         {
             "name": "IDENTIFIER",
