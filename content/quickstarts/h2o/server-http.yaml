@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: h2o
+objects:
+- apiVersion: v1
+  kind: ReplicationController
+  metadata:
+    name: h2o-http-${IDENTIFIER}
+  spec:
+    replicas: 1
+    selector:
+      name: h2o-http-${IDENTIFIER}
+    template:
+      metadata:
+        labels:
+          name: h2o-http-${IDENTIFIER}
+          test: http
+      spec:
+        containers:
+        - image: docker.io/jmencak/h2o
+          imagePullPolicy: IfNotPresent
+          name: h2o-http
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          securityContext:
+            capabilities:
+              drop:
+              - KILL
+              - MKNOD
+              - SETGID
+              - SETUID
+              - SYS_CHROOT
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        restartPolicy: Always
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: h2o-http-${IDENTIFIER}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    to:
+      kind: Service
+      name: h2o-http-${IDENTIFIER}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes and load balances the application pods
+    labels:
+      name: h2o-http
+    name: h2o-http-${IDENTIFIER}
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      name: h2o-http-${IDENTIFIER}
+    type: NodePort
+parameters:
+- description: The exposed hostname that will route to the h2o-* service, if left
+    blank a value will be defaulted.
+  displayName: Application Hostname
+  name: APPLICATION_DOMAIN
+  value: ''
+- description: Number to append to the name of resources
+  name: IDENTIFIER
+  value: '1'

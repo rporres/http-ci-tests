@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: nginx
+objects:
+- apiVersion: v1
+  kind: ReplicationController
+  metadata:
+    name: nginx-http-${IDENTIFIER}
+  spec:
+    replicas: 1
+    selector:
+      name: nginx-http-${IDENTIFIER}
+    template:
+      metadata:
+        labels:
+          name: nginx-http-${IDENTIFIER}
+          test: http
+      spec:
+        containers:
+        - image: docker.io/jmencak/nginx
+          imagePullPolicy: IfNotPresent
+          name: nginx-http
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          securityContext:
+            capabilities:
+              drop:
+              - KILL
+              - MKNOD
+              - SETGID
+              - SETUID
+              - SYS_CHROOT
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        restartPolicy: Always
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: nginx-http-${IDENTIFIER}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    to:
+      kind: Service
+      name: nginx-http-${IDENTIFIER}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes and load balances the application pods
+    labels:
+      name: nginx-http
+    name: nginx-http-${IDENTIFIER}
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      name: nginx-http-${IDENTIFIER}
+    type: NodePort
+parameters:
+- description: The exposed hostname that will route to the nginx-* service, if left
+    blank a value will be defaulted.
+  displayName: Application Hostname
+  name: APPLICATION_DOMAIN
+  value: ''
+- description: Number to append to the name of resources
+  name: IDENTIFIER
+  value: '1'

@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: h2o
+objects:
+- apiVersion: v1
+  kind: ReplicationController
+  metadata:
+    name: h2o-passthrough-${IDENTIFIER}
+  spec:
+    replicas: 1
+    selector:
+      name: h2o-passthrough-${IDENTIFIER}
+    template:
+      metadata:
+        labels:
+          name: h2o-passthrough-${IDENTIFIER}
+          test: http
+      spec:
+        containers:
+        - image: docker.io/jmencak/h2o
+          imagePullPolicy: IfNotPresent
+          name: h2o-passthrough
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          - containerPort: 8443
+            name: https
+            protocol: TCP
+          securityContext:
+            capabilities:
+              drop:
+              - KILL
+              - MKNOD
+              - SETGID
+              - SETUID
+              - SYS_CHROOT
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        restartPolicy: Always
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: h2o-passthrough-${IDENTIFIER}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    tls:
+      termination: passthrough
+    to:
+      kind: Service
+      name: h2o-passthrough-${IDENTIFIER}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes and load balances the application pods
+    labels:
+      name: h2o-passthrough
+    name: h2o-passthrough-${IDENTIFIER}
+  spec:
+    ports:
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: 8443
+    selector:
+      name: h2o-passthrough-${IDENTIFIER}
+    type: NodePort
+parameters:
+- description: The exposed hostname that will route to the h2o-* service, if left
+    blank a value will be defaulted.
+  displayName: Application Hostname
+  name: APPLICATION_DOMAIN
+  value: ''
+- description: Number to append to the name of resources
+  name: IDENTIFIER
+  value: '1'

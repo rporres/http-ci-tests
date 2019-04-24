@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: h2o
+objects:
+- apiVersion: v1
+  kind: ReplicationController
+  metadata:
+    name: h2o-reencrypt-${IDENTIFIER}
+  spec:
+    replicas: 1
+    selector:
+      name: h2o-reencrypt-${IDENTIFIER}
+    template:
+      metadata:
+        labels:
+          name: h2o-reencrypt-${IDENTIFIER}
+          test: http
+      spec:
+        containers:
+        - image: docker.io/jmencak/h2o
+          imagePullPolicy: IfNotPresent
+          name: h2o-reencrypt
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          - containerPort: 8443
+            name: https
+            protocol: TCP
+          securityContext:
+            capabilities:
+              drop:
+              - KILL
+              - MKNOD
+              - SETGID
+              - SETUID
+              - SYS_CHROOT
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        restartPolicy: Always
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: h2o-reencrypt-${IDENTIFIER}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    tls:
+      certificate: "-----BEGIN CERTIFICATE-----\nMIIDZTCCAk2gAwIBAgIBATANBgkqhkiG9w0BAQsFADBNMQswCQYDVQQGEwJVUzET\nMBEGA1UECAwKQ2FsaWZvcm5pYTELMAkGA1UEBwwCTlkxHDAaBgNVBAoME0RlZmF1\nbHQgQ29tcGFueSBMdGQwHhcNMTcwMTI0MDgzNDQwWhcNMjcwMTIyMDgzNDQwWjCB\njzErMCkGA1UEAwwiKi5yb3V0ZXIuZGVmYXVsdC5zdmMuY2x1c3Rlci5sb2NhbDET\nMBEGA1UECAwKQ2FsaWZvcm5pYTELMAkGA1UEBhMCVVMxIDAeBgkqhkiG9w0BCQEW\nEWFkbWluQGV4YW1wbGUuY29tMRwwGgYDVQQKDBNEZWZhdWx0IENvbXBhbnkgTHRk\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyzR6sztDA59cN7lypc5j\nUgrpyQ+Kt2fiHMjNahNhs28n4k3owd9IP64x8NXYZw/C2+c2Jz27y9e+EvSRduNV\nopVOzepfP8wOJRrcXMQCEt8wQ4iCB+wPtj7KaaC3e6gq4UYSb/LxTHc0MUFfFT5i\n3cxQhltrR6SfCA+KcuclGtkRPySSgmlheHHFxbHdYMvop5G8V9f6wNl04IjKFxtl\n7NTL1Ia8NpAnIit0mxfxWNkYa9E+SrONjEAQt0Z8OBRAt94tq3ilFAmDEcm/aTEH\ns+b5zscNbf7Mh1NtzCHpeFd/tKBxNyMJlEMoCc4rFDv8pBveXXOlKp/MHt7q3ANs\naQIDAQABow0wCzAJBgNVHRMEAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCIq+8T7wc8\njL6G9/VM21mlxbHmkPB18eCxMV0VZvKdH+Hg2g8U5flg+cE8kG/BBMPAdA+I2Lla\ngi1uqESEqKMyiJvqxej2IIxQKojUEPF/u0ZjAxc8pzs8yUtgDbt6Ur6sDJ2NShbg\nBnQVkOrFTJJ0trHMPc4zilIeLGZXiZNJrC/JBPOe0DbInSixIreoPSNciW6G5MZ3\ni4a8cpmg7WTzNSkikvkzaZA0xWupYwjbQdxg5qmflzA8e+45uVc8H+6qQ5em83+x\nRr7RN9p3GnxBK7sc7taCQxLwyWW0hsRqfvWvWzEsDj57WElvIe8ed8vk8AjBxg1S\ngnYUE1S6lSSH\n-----END CERTIFICATE-----"
+      key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLNHqzO0MDn1w3\nuXKlzmNSCunJD4q3Z+IcyM1qE2GzbyfiTejB30g/rjHw1dhnD8Lb5zYnPbvL174S\n9JF241WilU7N6l8/zA4lGtxcxAIS3zBDiIIH7A+2PsppoLd7qCrhRhJv8vFMdzQx\nQV8VPmLdzFCGW2tHpJ8ID4py5yUa2RE/JJKCaWF4ccXFsd1gy+inkbxX1/rA2XTg\niMoXG2Xs1MvUhrw2kCciK3SbF/FY2Rhr0T5Ks42MQBC3Rnw4FEC33i2reKUUCYMR\nyb9pMQez5vnOxw1t/syHU23MIel4V3+0oHE3IwmUQygJzisUO/ykG95dc6Uqn8we\n3urcA2xpAgMBAAECggEAJESUlcLA/jeGLQfzV3aTsYPzIAifGIb5C2wnhYQ6Dt2K\n/9Ap99hTO9JqZXK1cgeVHsyQlMZm60XxTc7K265NjXwamZP4NhnEeIjnxcLSH+4n\n3hXSJ3nRgBSK6fleZjqolJZ+Ge8BdEVeUmA5iUAeQzoBMUnFxv6xx62GZ2Wr8LN1\n4h+icGwJkL/zqS2oHpvMPhmevY7fcfO54G8DK1XBk+Pr/rYBzKEAIdgBIW2a52wZ\nLXNccCfV96mVhet43GzCIqnpj7cPnpQUs5RAgs/f6RsZAz5nwMnuQnCDz2pe2bJ3\nz2MyuiZvNz2iTftUURKzOdrH/ZjJpt8tI0pwUrMzkQKBgQDwZnIOif3s4D8B1tvC\ntteqALl0XyvpvLvmeztNa1K6C6hsbHIePDMBt/2StKtVMw+YRV0Cgpv2i0YiVxE6\nbHmYuUNa9UWuxiz1vTtdeT8JzR7N0LlhgPQpXdbeF/xd0nW8i9VFhBBgAVmtG/hn\n9dqb5tT9LFusm/GVV6o5EYccfQKBgQDYZCSupZIsBn4AEpzo3haWSQtunjnX9pYQ\nZRB6RyHK/L0bZJ9c5aoDzST/Tith7izDG/V49qM4NHCi8h8tyzfwNX5jaGy2Ot7/\nRqjc01T3VgzIHot+du4TO19Q9UwUskMqZgfFOMrj7c7Ec86Tug4HlfKZqQL6Ey6N\nkU9cK4nPXQKBgQCQ++gL1rNa+f9l95QAQc+diuROR9uvExFrtqSUU4bIB6HjCiBl\nFb9ZaQK4SNgQAUSFfEfU7LptHaAFs+cDCkrnjcwOfmAxQPn6ls7H2Ajpu1i5ngk/\nwcr/a8XbmjGsz/IL7XWJgFVz4TyZR4YwBLl8TuHjcq4zUrWHcSCLXIPU7QKBgEv+\nn4NWUodzoDyWTNTbakNNU959YwMdboZDeA35fTy0lhVQuUb+wT6khSHEaifyZXYA\nE61vsNLEV+ph7eE/RV3u63wt6D/3XOl5/0POVECoz8RYNdUsH2BRsZ/VBesez8fM\nHV5+G4MAuWT05s+qv9KaLqEYYhtBMVA2gBB2medhAoGAXd6lnBByuWrfHGWB5Gu+\ngKWz8b/b7CD64F10lQnv049qkFL7W4W3FuevaeEu59fUS5YlmoqLK9HA0PYtYu7O\nruEWqJwxkE3obUYLCv9gOnbmBTbW06n6sajBljbkQIqdI6SNKzO73N2scQi80jGi\n170/K2a6P2a38cg91lZDv9Q=\n-----END PRIVATE KEY-----"
+      destinationCACertificate: "-----BEGIN CERTIFICATE-----\nMIIDbTCCAlWgAwIBAgIJAJR/jN0Oa+/rMA0GCSqGSIb3DQEBCwUAME0xCzAJBgNV\nBAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMQswCQYDVQQHDAJOWTEcMBoGA1UE\nCgwTRGVmYXVsdCBDb21wYW55IEx0ZDAeFw0xNzAxMjQwODExMDJaFw0yNzAxMjIw\nODExMDJaME0xCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMQswCQYD\nVQQHDAJOWTEcMBoGA1UECgwTRGVmYXVsdCBDb21wYW55IEx0ZDCCASIwDQYJKoZI\nhvcNAQEBBQADggEPADCCAQoCggEBAMItGS9sSafyqBuOcQcQ5j7OQ0EwF9qOckhl\nfT8VzUbcOy8/L/w654MpLEa4O4Fiek3keE7SDWGVtGZWDvT9y1QUxPhkDWq1Y3rr\nyMelv1xRIyPVD7EEicga50flKe8CKd1U3D6iDQzq0uxZZ6I/VArXW/BZ4LfPauzN\n9EpCYyKq0fY7WRFIGouO9Wu800nxcHptzhLAgSpO97aaZ+V+jeM7n7fchRSNrpIR\nzPBl/lIBgCPJgkax0tcm4EIKIwlG+jXWc5mvV8sbT8rAv32HVuaP6NafyWXXP3H1\noBf2CQCcwuM0sM9ZeZ5JEDF/7x3eNtqSt1X9HjzVpQjiVBXY+E0CAwEAAaNQME4w\nHQYDVR0OBBYEFOXxMHAA1qaKWlP+gx8tKO2rQ81WMB8GA1UdIwQYMBaAFOXxMHAA\n1qaKWlP+gx8tKO2rQ81WMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB\nAJAri7Pd0eSY/rvIIvAvjhDPvKt6gI5hJEUp+M3nWTWA/IhQFYutb9kkZGhbBeLj\nqneJa6XYKaCcUx6/N6Vvr3AFqVsbbubbejRpdpXldJC33QkwaWtTumudejxSon24\nW/ANN/3ILNJVMouspLRGkFfOYp3lq0oKAlNZ5G3YKsG0znAfqhAVtqCTG9RU24Or\nxzkEaCw8IY5N4wbjCS9FPLm7zpzdg/M3A/f/vrIoGdns62hzjzcp0QVTiWku74M8\nv7/XlUYYvXOvPQCCHgVjnAZlnjcxMTBbwtdwfxjAmdNTmFFpASnf0s3b287zQwVd\nIeSydalVtLm7rBRZ59/2DYo=\n-----END CERTIFICATE-----"
+      termination: reencrypt
+    to:
+      kind: Service
+      name: h2o-reencrypt-${IDENTIFIER}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes and load balances the application pods
+    labels:
+      name: h2o-reencrypt
+    name: h2o-reencrypt-${IDENTIFIER}
+  spec:
+    ports:
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: 8443
+    selector:
+      name: h2o-reencrypt-${IDENTIFIER}
+    type: NodePort
+parameters:
+- description: The exposed hostname that will route to the h2o-* service, if left
+    blank a value will be defaulted.
+  displayName: Application Hostname
+  name: APPLICATION_DOMAIN
+  value: ''
+- description: Number to append to the name of resources
+  name: IDENTIFIER
+  value: '1'

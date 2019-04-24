@@ -14,7 +14,7 @@ ClusterLoader:
         - wlg-ssh-key: /root/.ssh/id_rsa
       templates:
         - num: 1
-          file: quickstarts/stress/stress-pod.json
+          file: quickstarts/stress/stress-pod.yaml
           parameters:
             - WLG_IMAGE:                # Workload generator image
             - RUN: "mb"			# which app to execute inside WLG pod

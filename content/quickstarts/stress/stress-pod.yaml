@@ -1,0 +1,224 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: centos-stress-template
+objects:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    generateName: centos-stress-
+    labels:
+      run: centos-stress
+      test: centos-stress
+  spec:
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+            - key: test
+              operator: In
+              values:
+              - centos-stress
+          topologyKey: kubernetes.io/hostname
+    containers:
+    - env:
+      - name: RUN
+        value: ${RUN}
+      - name: RUN_TIME
+        value: ${RUN_TIME}
+      - name: STRESS_CPU
+        value: ${STRESS_CPU}
+      - name: ROUTER_IP
+        value: ${ROUTER_IP}
+      - name: TARGET_HOST
+        value: ${TARGET_HOST}
+      - name: TARGET_PORT
+        value: ${TARGET_PORT}
+      - name: JVM_ARGS
+        value: ${JVM_ARGS}
+      - name: JMETER_SIZE
+        value: ${JMETER_SIZE}
+      - name: JMETER_RAMP
+        value: ${JMETER_RAMP}
+      - name: JMETER_TPS
+        value: ${JMETER_TPS}
+#      - name: NAMESERVER1
+#        value: 1.1.1.1
+      - name: MB_DELAY
+        value: ${MB_DELAY}
+      - name: MB_TARGETS
+        value: ${MB_TARGETS}
+      - name: MB_CONNS_PER_TARGET
+        value: ${MB_CONNS_PER_TARGET}
+      - name: MB_METHOD
+        value: ${MB_METHOD}
+      - name: MB_REQUEST_BODY_SIZE
+        value: ${MB_REQUEST_BODY_SIZE}
+      - name: MB_KA_REQUESTS
+        value: ${MB_KA_REQUESTS}
+      - name: MB_TLS_SESSION_REUSE
+        value: ${MB_TLS_SESSION_REUSE}
+      - name: MB_RAMP_UP
+        value: ${MB_RAMP_UP}
+      - name: URL_PATH
+        value: ${URL_PATH}
+      - name: GUN
+        value: ${GUN}
+      - name: GUN_PORT
+        value: ${GUN_PORT}
+      - name: RESULTS_DIR
+        value: ${RESULTS_DIR}
+      - name: SERVER_RESULTS
+        value: ${SERVER_RESULTS}
+      - name: SERVER_RESULTS_DIR
+        value: ${SERVER_RESULTS_DIR}
+      - name: IDENTIFIER
+        value: ${IDENTIFIER}
+      image: ${WLG_IMAGE}
+      imagePullPolicy: Always
+      name: centos-stress
+      resources: {}
+      terminationMessagePath: /dev/termination-log
+      volumeMounts:
+      - mountPath: /opt/wlg/
+        name: targets
+      - mountPath: /opt/stress/.ssh/
+        name: ssh-key
+    hostNetwork: false
+    nodeSelector:
+      placement: ${PLACEMENT}
+    restartPolicy: Never
+    securityContext:
+      sysctls:
+      - name: net.ipv4.ip_local_port_range
+        value: 1024 65535
+    tolerations:
+    - effect: NoSchedule
+      key: placement
+      operator: Equal
+      value: ${PLACEMENT}
+    volumes:
+    - configMap:
+        items:
+        - key: wlg-targets
+          path: targets.txt
+        name: wlg-targets
+        optional: true
+      name: targets
+    - name: ssh-key
+      secret:
+        items:
+        - key: wlg-ssh-key
+          path: id_rsa
+        optional: true
+        secretName: wlg-ssh-key
+parameters:
+- description: Workload generator image
+  displayName: WLG image
+  name: WLG_IMAGE
+  value: svt/centos-stress:latest
+- description: Tells the container which app to execute
+  displayName: Run App Name
+  name: RUN
+  value: jmeter
+- description: The duration that tools will run before ending
+  displayName: Run timeout
+  name: RUN_TIME
+  value: '60'
+- description: How many stress CPU worker threads to spawn
+  displayName: STRESS CPU Threads
+  name: STRESS_CPU
+  value: '6'
+- description: The IP of the OpenShift router to direct requests through
+  displayName: Router IP
+  name: ROUTER_IP
+  value: 127.0.0.1
+- description: The target IP for HTTP requests in JMeter
+  displayName: JMeter IP
+  name: TARGET_HOST
+  value: 127.0.0.1
+- description: The target port for HTTP requests in JMeter
+  displayName: JMeter Port
+  name: TARGET_PORT
+  value: '80'
+- description: Optional JVM arguments
+  displayName: Optional JVM arguments
+  name: JVM_ARGS
+  value: ''
+- description: Number of hosts to stress per JMeter instance
+  displayName: JMeter instance size
+  name: JMETER_SIZE
+  value: '3'
+- description: The ramp-up period of the thread group in JMeter
+  displayName: JMeter Ramp-up Time
+  name: JMETER_RAMP
+  value: '30'
+- description: Thread throuput rate for JMeter
+  displayName: JMeter throughput
+  name: JMETER_TPS
+  value: '60'
+- description: Delay between requests for the mb client in ms.
+  displayName: Delay between requests for mb
+  name: MB_DELAY
+  value: '1000'
+- description: Regex to select target routes for mb.
+  displayName: Regex to select target routes
+  name: MB_TARGETS
+  value: .
+- description: Connections per target route for mb.
+  displayName: Connections per target route for mb
+  name: MB_CONNS_PER_TARGET
+  value: '1'
+- description: HTTP method (GET by default).
+  displayName: HTTP method
+  name: MB_METHOD
+  value: GET
+- description: Body length of POST requests in characters.
+  displayName: Body length of POST requests in characters
+  name: MB_REQUEST_BODY_SIZE
+  value: '128'
+- description: 'How many HTTP keep-alive requests to send per connection before sending
+    Connection: close header.'
+  displayName: How many HTTP keep-alive requests to send per connection
+  name: MB_KA_REQUESTS
+  value: '10'
+- description: Enable/Disable TLS session reuse for mb.
+  displayName: Enable/Disable TLS session reuse for mb
+  name: MB_TLS_SESSION_REUSE
+  value: 'true'
+- description: Thread ramp-up time in seconds.
+  displayName: Thread ramp-up time in seconds
+  name: MB_RAMP_UP
+  value: '0'
+- description: URL path to query with http(s) requests.
+  displayName: URL path to query
+  name: URL_PATH
+  value: /
+- description: The IP of the machine running cluster loader
+  displayName: GUN IP Addr
+  name: GUN
+  value: 127.0.0.1
+- description: The port number of the machine running cluster loader
+  displayName: GUN Port Number
+  name: GUN_PORT
+  value: '9090'
+- description: Local/Container test results directory, if empty, default will be used
+  displayName: Test result directory
+  name: RESULTS_DIR
+  value: ''
+- description: 'ssh server to copy results to: [user@]server'
+  displayName: ssh server to copy results to
+  name: SERVER_RESULTS
+  value: ''
+- description: 'Target directory on the ssh results server: <SERVER_RESULTS>:<SERVER_RESULTS_DIR>'
+  displayName: Target directory on the ssh results server
+  name: SERVER_RESULTS_DIR
+  value: ''
+- description: Placement of the WLG pod based on a node selector.
+  displayName: Placement of the WLG pod
+  name: PLACEMENT
+  value: test
+- description: Number to append to the name of resources
+  name: IDENTIFIER
+  value: '1'

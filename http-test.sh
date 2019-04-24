@@ -325,7 +325,7 @@ cl_new_project_or_reuse() {
 # Populate the cluster with application pods and routes.
 cl_load() {
   local server_quickstart_dir="content/quickstarts/$http_server"
-  local templates="$server_quickstart_dir/server-http.json $server_quickstart_dir/server-tls-edge.json $server_quickstart_dir/server-tls-passthrough.json $server_quickstart_dir/server-tls-reencrypt.json"
+  local templates="$server_quickstart_dir/server-http.yaml $server_quickstart_dir/server-tls-edge.yaml $server_quickstart_dir/server-tls-passthrough.yaml $server_quickstart_dir/server-tls-reencrypt.yaml"
   local projects=${CL_PROJECTS:-10}		# 10, 30, 60, 180
   local project_start=1
   local templates_total=${CL_TEMPLATES:-50}	# number of templates per project
