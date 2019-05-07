@@ -33,7 +33,6 @@ objects:
               - SETUID
               - SYS_CHROOT
             privileged: false
-          terminationMessagePath: /dev/termination-log
         restartPolicy: Always
 - apiVersion: v1
   kind: Route
