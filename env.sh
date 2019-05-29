@@ -14,7 +14,7 @@ export MOVE_RESULTS=${MOVE_RESULTS:-false}
 # Endpoint for collecting results from workload generator node(s).  Keep empty if copying is not required.
 # - scp://[user@]server:[path]
 # - kcp://[namespace/]pod:[path]
-# Note: when PBENCH_USE=true, path is overriden by $benchmark_run_dir
+# Note: when PBENCH_USE=true, path is overriden by benchmark_run_dir environment variable
 export SERVER_RESULTS=${SERVER_RESULTS}
 # Path to private key when using scp:// to copy results to SERVER_RESULTS.  It is mounted to workload generator container(s).
 export SERVER_RESULTS_SSH_KEY=${SERVER_RESULTS_SSH_KEY:-/root/.ssh/id_rsa}
