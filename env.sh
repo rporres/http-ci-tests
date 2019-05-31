@@ -21,7 +21,8 @@ export SERVER_RESULTS_SSH_KEY=${SERVER_RESULTS_SSH_KEY:-/root/.ssh/id_rsa}
 # How many workload generators to use.
 export LOAD_GENERATORS=${LOAD_GENERATORS:-1}
 # Load-generator nodes described by an extended regular expression (use "oc get nodes" node names).
-export LOAD_GENERATOR_NODES=${LOAD_GENERATOR_NODES:-b[5-5].lan}
+# If unset/empty, do not pin the workload generators to any nodes.
+export LOAD_GENERATOR_NODES=${LOAD_GENERATOR_NODES:-}
 # Number of projects to create for each type of application (4 types currently).
 export CL_PROJECTS=${CL_PROJECTS:-10}
 # Number of templates to create per project.
@@ -44,3 +45,7 @@ export ROUTE_TERMINATION=${ROUTE_TERMINATION:-mix}
 export SMOKE_TEST=${SMOKE_TEST:-false}
 # Delete all namespaces with application pods, services and routes created for the purposes of HTTP tests.
 export NAMESPACE_CLEANUP=${NAMESPACE_CLEANUP:-true}
+# HTTP workload generator container image
+export HTTP_STRESS_CONTAINER_IMAGE=${HTTP_STRESS_CONTAINER_IMAGE:-quay.io/openshift-scale/http-stress}
+# HTTP server container image
+export HTTP_SERVER_CONTAINER_IMAGE=${HTTP_SERVER_CONTAINER_IMAGE:-quay.io/openshift-scale/nginx}

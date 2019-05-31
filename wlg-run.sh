@@ -2,7 +2,7 @@
 
 wlg_config=content/quickstarts/stress/stress-pod.yaml
 k8s_config=${KUBECONFIG:-$HOME/.kube/config}
-centos_stress_ns=centos-stress
+http_stress_ns=http-stress
 
 ### Functions ##################################################################
 fail() {
@@ -33,7 +33,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: wlg-env
-  namespace: $centos_stress_ns
+  namespace: $http_stress_ns
 data:
   # which app to execute inside WLG pod
   RUN: "${RUN:-mb}"
@@ -70,20 +70,19 @@ _ENV_EOF_
 
 oc_create() {
   local wlg=1
-  local skip_config_write
 
-  test $(oc project -q 2>/dev/null | wc -l) -eq 1 && skip_config_write=--skip-config-write	# don't switch to the new project if we have access to the current project
-  oc new-project $centos_stress_ns $skip_config_write						# don't use "oc create ns", issues when working as non-privileged user
+  oc new-project $http_stress_ns --skip-config-write
   oc_create_env || \
     die 1 "Cannot create environment ConfigMap for WLG pod(s)."
-  oc create cm wlg-targets --from-file=wlg-targets=./routes.txt -n=$centos_stress_ns || \
+  oc create cm wlg-targets --from-file=wlg-targets=./routes.txt -n=$http_stress_ns || \
     die 1 "Cannot create wlg-targets ConfigMap for WLG pod(s)."
-  oc create secret generic wlg-ssh-key --from-file=wlg-ssh-key=$SERVER_RESULTS_SSH_KEY -n=$centos_stress_ns || \
+  oc create secret generic wlg-ssh-key --from-file=wlg-ssh-key=$SERVER_RESULTS_SSH_KEY -n=$http_stress_ns || \
     die 1 "Cannot create wlg-ssh-key Secret for WLG pod(s)."
-  oc create cm k8s-config --from-file=k8s-config=$k8s_config -n=$centos_stress_ns || \
+  oc create cm k8s-config --from-file=k8s-config=$k8s_config -n=$http_stress_ns || \
     die 1 "Cannot create k8s-config ConfigMap for WLG pod(s)."
 
-  check_admin && {
+  test "$LOAD_GENERATOR_NODES" && check_admin && {
+    # Lode generator nodes were specified and we have a cluster admin, steer the workload generator
     NODE_SELECTOR='{"test": "wlg"}'
   }
 
@@ -92,10 +91,11 @@ oc_create() {
   do
     oc process \
       -pIDENTIFIER=$wlg \
+      -pHTTP_STRESS_CONTAINER_IMAGE="${HTTP_STRESS_CONTAINER_IMAGE}" \
       -pNODE_SELECTOR="${NODE_SELECTOR:-null}" \
       -f $wlg_config \
-      -n=$centos_stress_ns | \
-        oc create -f- -n=$centos_stress_ns &
+      -n=$http_stress_ns | \
+        oc create -f- -n=$http_stress_ns &
     sleep 0.1s
     wlg=$(($wlg + 1))
   done
@@ -103,17 +103,17 @@ oc_create() {
 
 oc_cleanup() {
   exec 3>&1 4>&2 >/dev/null 2>&1
-  oc delete pods -n=$centos_stress_ns --all
-  oc delete cm -n=$centos_stress_ns --all      # wlg-targets! (e.g. switch from http->edge)
-  oc delete secret wlg-ssh-key -n=$centos_stress_ns || true
-  oc delete ns $centos_stress_ns || true
+  oc delete pods -n=$http_stress_ns --all
+  oc delete cm -n=$http_stress_ns --all      # wlg-targets! (e.g. switch from http->edge)
+  oc delete secret wlg-ssh-key -n=$http_stress_ns || true
+  oc delete ns $http_stress_ns || true
   exec 2>&4 1>&3
 }
 
 client_wait_complete() {
   local completed
   while true; do
-    completed=$(oc get pods --no-headers -n=$centos_stress_ns -l=app=centos-stress --field-selector=status.phase=Succeeded 2>/dev/null | wc -l)
+    completed=$(oc get pods --no-headers -n=$http_stress_ns -l=app=http-stress --field-selector=status.phase=Succeeded 2>/dev/null | wc -l)
     echo "Completed wlg pods: $completed/${LOAD_GENERATORS}"
     test $completed -eq ${LOAD_GENERATORS} && break
     sleep 10

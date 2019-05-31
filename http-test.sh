@@ -184,6 +184,11 @@ load_generator_nodes_label_taint() {
   local i node placement taint region region_old
   local oc_whoami=`oc whoami`
 
+  test "$LOAD_GENERATOR_NODES" || {
+    echo "Not (un)labelling nodes, load generator nodes unspecified."
+    return
+  }
+
   check_admin || {
     echo "Not (un)labelling nodes, cluster admin needed."
     return
@@ -259,8 +264,7 @@ cl_new_project_or_reuse() {
     done
   else
     # $project doesn't exist
-    test $(oc project -q 2>/dev/null | wc -l) -eq 1 && skip_config_write=--skip-config-write # don't switch to the new project if we have access to the current project
-    oc new-project $project $skip_config_write
+    oc new-project $project --skip-config-write
   fi
 }
 
@@ -294,7 +298,11 @@ cl_load() {
       while test $i -le $templates_total
       do
         i_f=$(printf "%03d" $i)
-        oc process -pIDENTIFIER=$i_f -f $template | oc create -f- -n=$project
+        oc process \
+          -pIDENTIFIER=$i_f \
+          -pHTTP_SERVER_CONTAINER_IMAGE=$HTTP_SERVER_CONTAINER_IMAGE \
+          -f $template \
+          -n=$project | oc create -f- -n=$project
         i=$((i+1))
 
         cl_max_pods_not_running 20 $project
@@ -306,6 +314,7 @@ cl_load() {
 pbench_user_benchmark() {
   local benchmark_test_config="$1"
 
+  echo "Starting Pbench on `hostname`"
   # a regular pbench run
   if test "${PBENCH_SCRAPER_USE}" = true ; then
     pbench-user-benchmark \

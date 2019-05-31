@@ -18,7 +18,7 @@ objects:
           test: http
       spec:
         containers:
-        - image: docker.io/jmencak/nginx
+        - image: ${HTTP_SERVER_CONTAINER_IMAGE}
           imagePullPolicy: IfNotPresent
           name: nginx-edge
           ports:
@@ -77,3 +77,6 @@ parameters:
 - description: Number to append to the name of resources
   name: IDENTIFIER
   value: '1'
+- description: HTTP server container image
+  name: HTTP_SERVER_CONTAINER_IMAGE
+  value: 'quay.io/openshift-scale/nginx'

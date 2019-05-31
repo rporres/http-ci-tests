@@ -18,7 +18,7 @@ objects:
           test: http
       spec:
         containers:
-        - image: docker.io/jmencak/h2o
+        - image: quay.io/jmencak/h2o
           imagePullPolicy: IfNotPresent
           name: h2o-reencrypt
           ports:

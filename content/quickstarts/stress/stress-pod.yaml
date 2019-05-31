@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Template
 metadata:
-  name: centos-stress-template
+  name: http-stress-template
 objects:
 - apiVersion: v1
   kind: Pod
   metadata:
-    generateName: centos-stress-
+    generateName: http-stress-
     labels:
-      app: centos-stress
+      app: http-stress
   spec:
     affinity:
       podAntiAffinity:
@@ -18,7 +18,7 @@ objects:
             - key: app
               operator: In
               values:
-              - centos-stress
+              - http-stress
           topologyKey: kubernetes.io/hostname
     containers:
     - env:
@@ -31,9 +31,9 @@ objects:
       envFrom:
       - configMapRef:
           name: wlg-env
-      image: quay.io/jmencak/centos-stress
+      image: ${HTTP_STRESS_CONTAINER_IMAGE}
       imagePullPolicy: Always
-      name: centos-stress
+      name: http-stress
       resources: {}
       volumeMounts:
       - mountPath: /etc/kubernetes/
@@ -80,8 +80,7 @@ objects:
           path: id_rsa
         optional: true
         secretName: wlg-ssh-key
-        # yaml/json doesn't support octal: 400 = (4 * 8^2) + (4 * 8^1) + (4 * 8^0) => 256
-        defaultMode: 256
+        defaultMode: 0400
 parameters:
 - description: Number to append to the name of resources
   name: IDENTIFIER
@@ -89,3 +88,6 @@ parameters:
 - description: nodeSelector definition
   name: NODE_SELECTOR
   value: null
+- description: HTTP workload generator image
+  name: HTTP_STRESS_CONTAINER_IMAGE
+  value: 'quay.io/openshift-scale/http-stress'
