@@ -18,7 +18,7 @@ objects:
           test: http
       spec:
         containers:
-        - image: ${HTTP_SERVER_CONTAINER_IMAGE}
+        - image: ${HTTP_TEST_SERVER_CONTAINER_IMAGE}
           imagePullPolicy: IfNotPresent
           name: nginx-http
           ports:
@@ -70,5 +70,5 @@ parameters:
   name: IDENTIFIER
   value: '1'
 - description: HTTP server container image
-  name: HTTP_SERVER_CONTAINER_IMAGE
+  name: HTTP_TEST_SERVER_CONTAINER_IMAGE
   value: 'quay.io/openshift-scale/nginx'

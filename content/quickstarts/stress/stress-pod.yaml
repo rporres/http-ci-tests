@@ -31,7 +31,7 @@ objects:
       envFrom:
       - configMapRef:
           name: wlg-env
-      image: ${HTTP_STRESS_CONTAINER_IMAGE}
+      image: ${HTTP_TEST_STRESS_CONTAINER_IMAGE}
       imagePullPolicy: Always
       name: http-stress
       resources: {}
@@ -89,5 +89,5 @@ parameters:
   name: NODE_SELECTOR
   value: null
 - description: HTTP workload generator image
-  name: HTTP_STRESS_CONTAINER_IMAGE
+  name: HTTP_TEST_STRESS_CONTAINER_IMAGE
   value: 'quay.io/openshift-scale/http-stress'
