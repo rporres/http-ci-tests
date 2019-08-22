@@ -55,7 +55,7 @@ _HLP1_
 
   for key in "${param_name[@]}" ; do
     hlp="${param_hlp[$i]}"
-    ((i++))
+    i=$((i+1))
     cat <<_HLP2_ 1>&2
  $key: $hlp
 _HLP2_
@@ -74,7 +74,7 @@ param_set() {
     param_name[$i]="$param"
     param_fn[$i]="$fn"
     param_hlp[$i]="$hlp"
-    ((i++))
+    i=$((i+1))
   done << _PARAM_
 environment-dump|environment_dump|Dump the environment for the purposes of re-running some of the test iterations manually.
 router_liveness_probe-disable|router_liveness_probe|Increase period seconds for the router liveness probe.
@@ -101,7 +101,7 @@ param2fn() {
       echo "$fn"
       return 0
     fi
-    ((i++))
+    i=$((i+1))
   done
 
   return 1
@@ -132,7 +132,7 @@ router_liveness_probe() {
 
   check_admin || {
     echo "Not changing liveness probe, cluster admin needed."
-    return
+    return 0
   }
 
   # Increase period seconds for the router liveness probe.
@@ -171,7 +171,7 @@ results_dir_get() {
   test "${PBENCH_USE}" = true && server_results_dir=$pbench_agent_dir
 
   echo $server_results_dir
-  return
+  return 0
 }
 
 load_generator_nodes_label_taint() {
@@ -181,12 +181,12 @@ load_generator_nodes_label_taint() {
 
   test "$HTTP_TEST_LOAD_GENERATOR_NODES" || {
     echo "Not (un)labelling nodes, load generator nodes unspecified."
-    return
+    return 0
   }
 
   check_admin || {
     echo "Not (un)labelling nodes, cluster admin needed."
-    return
+    return 0
   }
 
   if test "$label" = y ; then
@@ -209,8 +209,8 @@ load_generator_nodes_label_taint() {
     fi
     oc label node $node $placement --overwrite
     oc label node $node $region --overwrite
-    oc adm taint nodes $node $taint
-    ((i++))
+    oc adm taint nodes $node $taint --overwrite
+    i=$((i+1))
   done
 }
 
@@ -226,7 +226,7 @@ load_generator_nodes_unlabel() {
 
 # Clear results from previous pbench runs.
 pbench_clear_results() {
-  test "${PBENCH_USE}" = true || return
+  test "${PBENCH_USE}" = true || return 0
 
   if test "${PBENCH_CLEAR_RESULTS}" = "true" ; then
     pbench-clear-results
@@ -310,11 +310,12 @@ pbench_user_benchmark() {
   # a regular pbench run
   if test "${PBENCH_SCRAPER_USE}" = true ; then
     pbench-user-benchmark \
+      --sysinfo=none \
       -C "$benchmark_test_config" \
       --pbench-post='/usr/local/bin/pbscraper -i $benchmark_results_dir/tools-default -o $benchmark_results_dir; ansible-playbook -vv -i /root/svt/utils/pbwedge/hosts /root/svt/utils/pbwedge/main.yml -e new_file=$benchmark_results_dir/out.json -e git_test_branch='http_$benchmark_test_config \
       -- $wlg_run_pbench
   else
-    pbench-user-benchmark -C "$benchmark_test_config" -- $wlg_run_pbench
+    pbench-user-benchmark --sysinfo=none -C "$benchmark_test_config" -- $wlg_run_pbench
   fi
 }
 
@@ -432,11 +433,11 @@ process_results() {
   local results_dir=$(results_dir_get)
   local out_dir=$results_dir/$archive_name
 
-  test "${HTTP_TEST_SERVER_RESULTS}" || return
+  test "${HTTP_TEST_SERVER_RESULTS}" || return 0
 
   rm -rf $out_dir
   for dir in $(find $results_dir -maxdepth 1 -type d -name *[0-9]r-*[0-9]cpt-*[0-9]d_ms-*[0-9]ka-ytlsru-*s-* | LC_COLLATE=C sort) ; do
-    set $(echo $dir | sed -E 's|^.*([0-9]{1,})r-([0-9]{1,})cpt-([0-9]{1,})d_ms-([0-9]{1,})ka-([yn])tlsru-([0-9]{1,})s-([^-]*)-.*$|\1 \2 \3 \4 \5 \6 \7|')
+    set $(echo $dir | sed -E 's|^.*[^0-9]([0-9]{1,})r-([0-9]{1,})cpt-([0-9]{1,})d_ms-([0-9]{1,})ka-([yn])tlsru-([0-9]{1,})s-([^-]*)-.*$|\1 \2 \3 \4 \5 \6 \7|')
     routes_f=$1
     conns_per_thread_f=$2
     delay_f=$3
@@ -470,7 +471,7 @@ process_results() {
 pbench_move_results() {
   local now=$(date '+%Y-%m-%d_%H.%M.%S')
 
-  test "${PBENCH_USE}" = true || return
+  test "${PBENCH_USE}" = true || return 0
 
   if test "${PBENCH_MOVE_RESULTS}" = true ; then
     echo "Starting pbench-move-results on `hostname` to `pbench-move-results --show-server`"
@@ -480,7 +481,7 @@ pbench_move_results() {
 
 # Delete all namespaces with application pods, services and routes created for the purposes of HTTP tests.
 namespace_cleanup() {
-  test "${HTTP_TEST_NAMESPACE_CLEANUP}" = true || return
+  test "${HTTP_TEST_NAMESPACE_CLEANUP}" = true || return 0
 
   # a user might not have the privileges to do selector-based namespace deletion, go through his/her projects and
   # do a project-name cleanup
@@ -494,8 +495,8 @@ main() {
 
   for key in "${param_fn[@]}" ; do
     fn="${param_fn[$i]}"
-    $fn || return $?
-    ((i++))
+    $fn || die 1 "failed to run $fn"
+    i=$((i+1))
   done
 }
 
@@ -524,9 +525,9 @@ while test "$1" ; do
   fn=$(param2fn $param)
 
   if test $? -eq 0 ; then
-    $fn || die 1 "failed to run $param"
+    $fn || die 1 "failed to run $fn"
   elif test "$param" = "all" ; then
-    main || die 1 "failed to run $param"
+    main || die 1 "failed to run $fn"
   else
     die 1 "don't know what to do with parameter '$param'"
   fi
